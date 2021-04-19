@@ -37,6 +37,7 @@ class Enviroment():
 def main():
     # Each arm is a different price for the first item
     n_arms = 3
+    n_arms = int(np.ceil((np.log10(T)*T)**0.25))
 
     #Number of classes of customers
     n_classes = 4
