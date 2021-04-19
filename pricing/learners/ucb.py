@@ -1,6 +1,7 @@
-from learner import Learner
 import numpy as np
 from scipy.optimize import linear_sum_assignment
+
+from pricing.learners.learner import Learner
 from matching.cumsum import CUMSUM
 
 
@@ -39,7 +40,7 @@ class SW_UCB(UCB):
     # Remove rewards that are outside of the window for a given arm. Since the array is ordered by the timestamp and
     # we execute this function every round, we only need to check the timestamp of the first element
     def clear_outside_window_rewards(self, arm):
-        if len(self.rewards_per_arm[arm] == 0): return
+        if len(self.rewards_per_arm[arm]) == 0: return
         first_elem_timestamp = self.rewards_per_arm[arm][0][1]
         if first_elem_timestamp < (self.t - self.window_size):
             self.rewards_per_arm[arm].pop()

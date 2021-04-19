@@ -1,4 +1,4 @@
-from learner import Learner
+from pricing.learners.learner import Learner
 import numpy as np
 
 
@@ -6,7 +6,7 @@ class Thompson(Learner):
 
     def __init__(self, n_arms):
         super().__init__(n_arms)
-        self.beta_parameters = np.ones(n_arms, 2)
+        self.beta_parameters = np.ones((n_arms, 2))
 
     def pull_arm(self):
         idx = np.argmax(np.random.beta(self.beta_parameters[:, 0], self.beta_parameters[:, 1]))
@@ -32,5 +32,5 @@ class SW_Thompson(Thompson):
         for arm in range(self.n_arms):
             n_samples = np.sum(self.pulled_arms[-self.window_size:] == arm)
             cum_rew = np.sum(self.rewards_per_arm[arm][-n_samples:]) if n_samples > 0 else 0
-            self.beta_parameters[arm, 0] = cum_rew + 1.0
-            self.beta_parameters[arm, 1] = n_samples - cum_rew + 1
+            self.beta_parameters[arm, 0] = np.max([1,cum_rew])
+            self.beta_parameters[arm, 1] = np.max([1,n_samples - cum_rew])
