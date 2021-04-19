@@ -36,6 +36,7 @@ class Enviroment():
     
 def main():
     # Each arm is a different price for the first item
+    T = 365
     n_arms = 3
     n_arms = int(np.ceil((np.log10(T)*T)**0.25))
 
