@@ -1,5 +1,10 @@
 import numpy as np
-np.random.seed(0)
+
+if __name__ == '__main__':
+    np.random.seed(0)
+    from Enviroment import Enviroment
+else:
+    from pricing.enviroment.Enviroment import Enviroment
 
 """
 This enviroment assumes:
@@ -8,7 +13,6 @@ This enviroment assumes:
       - Assignment of promos fixed
       - Numbers of customers per day of each class known and change with time
 """
-
 
 class Non_Stationary_Enviroment(Enviroment):
   def __init__(self, n_arms, n_customers, margin1, margin2, conv_rate1, conv_rate2, promo_assig, horizon, n_phases):
@@ -31,29 +35,34 @@ class Non_Stationary_Enviroment(Enviroment):
     self.t += 1
     return reward
   
-T = 365
-n_arms = 3
-n_classes = 4
-n_promos = 5
-n_phases = 6
 
-margin1 = 50*np.random.rand(n_arms)
-margin2 = 50*np.random.rand(n_promos)
+def main():
+    T = 365
+    n_arms = 3
+    n_classes = 4
+    n_promos = 5
+    n_phases = 6
 
-#Number of customers of class i at phase j
-n_customers = (100*np.random.rand(n_classes, n_phases)).astype(int)
+    margin1 = 50*np.random.rand(n_arms)
+    margin2 = 50*np.random.rand(n_promos)
 
-#Convertion rate of the first item, from class i at price j and phase k.
-conv_rate1 = np.random.rand(n_classes, n_arms, n_phases)
+    #Number of customers of class i at phase j
+    n_customers = (100*np.random.rand(n_classes, n_phases)).astype(int)
 
-#Convertion rate of the second item, from class i at original price j, discount from promo k and phase l
-conv_rate2 = np.random.rand(n_classes, n_arms, n_promos, n_phases)
+    #Convertion rate of the first item, from class i at price j and phase k.
+    conv_rate1 = np.random.rand(n_classes, n_arms, n_phases)
 
-promo_assig = np.random.rand(n_classes, n_promos)
-promo_assig = promo_assig / promo_assig.sum(axis=1)[:, np.newaxis]
+    #Convertion rate of the second item, from class i at original price j, discount from promo k and phase l
+    conv_rate2 = np.random.rand(n_classes, n_arms, n_promos, n_phases)
 
-nst_env = Non_Stationary_Enviroment(n_arms, n_customers, margin1, margin2, conv_rate1, conv_rate2, promo_assig, T, n_phases)
+    promo_assig = np.random.rand(n_classes, n_promos)
+    promo_assig = promo_assig / promo_assig.sum(axis=1)[:, np.newaxis]
 
-for i in range(10):
-  print(nst_env.round(0))
-  print(nst_env.t)
+    nst_env = Non_Stationary_Enviroment(n_arms, n_customers, margin1, margin2, conv_rate1, conv_rate2, promo_assig, T, n_phases)
+
+    for i in range(10):
+      print(nst_env.round(0))
+      print(nst_env.t)
+
+if __name__ == '__main__':
+    main()
