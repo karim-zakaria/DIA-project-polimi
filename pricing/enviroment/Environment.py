@@ -1,5 +1,15 @@
 import numpy as np
-np.random.seed(0)
+
+if __name__ == '__main__':
+    np.random.seed(0)
+
+"""
+This enviroment assumes:
+      - Price of the second item fixed
+      - Convertion rates known and fixed in time
+      - Assignment of promos fixed
+      - Numbers of customers per day of each class known and fixed in time
+"""
 
 class Enviroment():
   def __init__(self, n_arms, n_customers, margin1, margin2, conv_rate1, conv_rate2, promo_assig):
@@ -24,49 +34,46 @@ class Enviroment():
         
     return reward
     
-    
-    """
-This enviroment assumes:
-      - Price of the second item fixed
-      - Convertion rates known and fixed in time
-      - Assignment of promos fixed
-      - Numbers of customers per day of each class known and fixed in time
-"""
+def main():
+    # Each arm is a different price for the first item
+    T = 365
+    n_arms = 3
+    n_arms = int(np.ceil((np.log10(T)*T)**0.25))
 
-# Each arm is a different price for the first item
-n_arms = 3
+    #Number of classes of customers
+    n_classes = 4
+    n_promos = 5
 
-#Number of classes of customers
-n_classes = 4
-n_promos = 5
+    # Margin of product 1 at different prices
+    # Vector of positive floats
+    margin1 = 50*np.random.rand(n_arms)
 
-# Margin of product 1 at different prices
-# Vector of positive floats
-margin1 = 50*np.random.rand(n_arms)
+    # Margin of product 2 at different promos
+    # Vector of positive floats
+    margin2 = 50*np.random.rand(n_promos)
 
-# Margin of product 2 at different promos
-# Vector of positive floats
-margin2 = 50*np.random.rand(n_promos)
+    # Number of customers of each class
+    # Vector of integers
+    n_customers = (100*np.random.rand(n_classes)).astype(int)
 
-# Number of customers of each class
-# Vector of integers
-n_customers = (100*np.random.rand(n_classes)).astype(int)
+    # Convertion rate of the first item, from class i at price j.
+    # Matrix of probabilities
+    conv_rate1 = np.random.rand(n_classes, n_arms)
 
-# Convertion rate of the first item, from class i at price j.
-# Matrix of probabilities
-conv_rate1 = np.random.rand(n_classes, n_arms)
+    # Convertion rate of the second item, from class i at original price j and discount from promo k
+    # Matrix of probabilities
+    conv_rate2 = np.random.rand(n_classes, n_arms, n_promos)
 
-# Convertion rate of the second item, from class i at original price j and discount from promo k
-# Matrix of probabilities
-conv_rate2 = np.random.rand(n_classes, n_arms, n_promos)
+    # Percentage of people from class i that get the promotion j
+    promo_assig = np.random.rand(n_classes, n_promos)
 
-# Percentage of people from class i that get the promotion j
-promo_assig = np.random.rand(n_classes, n_promos)
+    # Normalization so the sum of each row is equal to 1
+    # Matrix of probabilities
+    promo_assig = promo_assig / promo_assig.sum(axis=1)[:, np.newaxis]
 
-# Normalization so the sum of each row is equal to 1
-# Matrix of probabilities
-promo_assig = promo_assig / promo_assig.sum(axis=1)[:, np.newaxis]
+    env = Enviroment(n_arms, n_customers, margin1, margin2, conv_rate1, conv_rate2, promo_assig)
 
-env = Enviroment(n_arms, n_customers, margin1, margin2, conv_rate1, conv_rate2, promo_assig)
+    env.round(0), env.round(1), env.round(2)
 
-env.round(0), env.round(1), env.round(2)
+if __name__ == '__main__':
+    main()

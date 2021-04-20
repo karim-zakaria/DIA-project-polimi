@@ -39,6 +39,7 @@ class Non_Stationary_Enviroment(Enviroment):
 def main():
     T = 365
     n_arms = 3
+    n_arms = int(np.ceil((np.log10(T)*T)**0.25))
     n_classes = 4
     n_promos = 5
     n_phases = 6
