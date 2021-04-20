@@ -9,7 +9,7 @@ class CUMSUM:
         self.t = 0
         self.reference = 0
         self.g_plus = 0
-        slef.g_minus = 0
+        self.g_minus = 0
 
     def update(self, sample):
         self.t += 1

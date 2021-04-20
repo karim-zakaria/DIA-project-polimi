@@ -2,9 +2,9 @@ import numpy as np
 
 if __name__ == '__main__':
     np.random.seed(0)
-    from Enviroment import Enviroment
+    from Environment import Enviroment
 else:
-    from pricing.enviroment.Enviroment import Enviroment
+    from pricing.enviroment.Environment import Enviroment
 
 """
 This enviroment assumes:
