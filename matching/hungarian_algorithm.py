@@ -49,7 +49,8 @@ def step5(m, covered_rows, covered_cols):
     min_val = np.max(m)
     for i in uncovered_rows.astype(int):
         for j in uncovered_cols.astype(int):
-            min_val = np.min(min_val, m[i, j])
+            if m[i, j] < min_val:
+                min_val = m[i, j]
 
     for i in uncovered_rows.astype(int):
         m[i, :] -= min_val
@@ -110,7 +111,7 @@ def final_assignment(initial_matrix, m):
         m[:, j] += 1
         assignment = assignment_single_zero_lines(m, assignment)
 
-    return assignment * initial_matrix, assignment
+    return assignment
 
 
 def solve(matrix):
