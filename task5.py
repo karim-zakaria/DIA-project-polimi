@@ -12,14 +12,15 @@ fraction = 0.6
 customers = [250, 250, 250, 250]
 promotion_size = sum(customers) * fraction
 
-margin2 = 50 * np.random.rand(n_promos)  # Margin of product 2 at different promos
-conv_rate2 = np.random.rand(n_classes, n_promos)  # Conversion rate of the second item, from class i at promo k
+margin2 = [20, 13, 6, 2.5]
+conv_rate2 = [[0.57, 0.6, 0.67, 0.69], [0.38, 0.4, 0.49, 0.53],
+              [0.17, 0.24, 0.37, 0.39], [0.49, 0.53, 0.65, 0.68]]
 
 m = np.zeros((n_classes, n_promos))
 
 for x in range(n_classes):
     for y in range(n_promos):
-        m[x][y] = margin2[y] * conv_rate2[x, y]
+        m[x][y] = margin2[y] * conv_rate2[x][y]
 
 # row_ind, col_ind = linear_sum_assignment(m)
 # print(col_ind)
@@ -38,8 +39,8 @@ for row in m:
         cost_row += [max_val - col]
     cost_matrix += [cost_row]
 
-cost_matrix = np.matrix(cost_matrix)
-
+print(m)
 hungarian = Munkres()
-indexes = hungarian.compute(m)
+indexes = hungarian.compute(cost_matrix)
 indexes = [x[1] for x in indexes]
+print(indexes)
