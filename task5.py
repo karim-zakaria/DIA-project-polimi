@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from hungarian_algorithm import algorithm
 from scipy.optimize import linear_sum_assignment
 from munkres import Munkres
@@ -43,4 +44,41 @@ print(m)
 hungarian = Munkres()
 indexes = hungarian.compute(cost_matrix)
 indexes = [x[1] for x in indexes]
+
+# Promotions found by the algorithm
 print(indexes)
+
+
+# Since the number of promotions are limited, they are assigned to the customer with respect to the reward in
+# descending order
+reward_class_i = []
+class_i = []
+for i in range(0, len(indexes)):
+    reward_class_i.append(m[i, indexes[i]])
+    class_i.append(i)
+
+table = list(zip(class_i, indexes, reward_class_i, customers))
+table = sorted(table, reverse=True, key=lambda x:x[2])
+
+promotions = promotion_size
+promo_assigned = []
+
+# If the promotion for a class is set to Promotion_0, meaning no promotion applied, the promotion assigned
+# for that class is then set to zero.
+for x in table:
+    if not x[1] == 0:
+        promo_assigned.append(min(x[3], int(promotions)))
+        promotions -= min(x[3], int(promotions))
+    else:
+        promo_assigned.append(0)
+
+# A data frame presenting data for each class.
+df = pd.DataFrame(table, columns=['Class', 'Promotion', 'Reward', 'Customers in class'])
+df['Assigned promotions'] = promo_assigned
+df = df.set_index('Class')
+df = df.sort_values('Class', ascending=True)
+print(df)
+
+# List of the amount of promotions assigned to each class
+nr_promo_class_i=df['Assigned promotions'].tolist()
+print(nr_promo_class_i)
