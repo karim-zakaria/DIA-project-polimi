@@ -27,12 +27,14 @@ class Enviroment():
         reward = 0
         for cust_class in range(len(self.n_customers)):
             buyers = np.random.binomial(self.n_customers[cust_class], self.conv_rate1[cust_class, pulled_arm])
-            reward += self.margin1[pulled_arm] * buyers
+            # divide number of buyers by number of custumers to work with fractions and keep rewards bounded in [0,1]
+            reward += self.margin1[pulled_arm] * buyers / self.n_customers[cust_class]
 
             for promo in range(self.n_promos):
                 buyers2 = np.random.binomial(buyers * self.promo_assig[cust_class, promo],
                                              self.conv_rate2[cust_class, pulled_arm, promo])
-                reward += self.margin2[promo] * buyers2
+                # divide buyers2 by maximum number of buyers to keep rewards bounded
+                reward += self.margin2[promo] * buyers2 / (buyers * self.promo_assig[cust_class, promo])
 
         return reward
 
