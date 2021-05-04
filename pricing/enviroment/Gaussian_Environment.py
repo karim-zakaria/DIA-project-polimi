@@ -14,6 +14,7 @@ This enviroment assumes:
       - Numbers of customers per day of each class Gaussian and fixed in time
 """
 
+
 class Gaussian_Enviroment(Enviroment):
   def __init__(self, n_arms, n_customers, margin1, margin2, conv_rate1, conv_rate2, promo_assig, cust_var):
     super().__init__(n_arms, n_customers, margin1, margin2, conv_rate1, conv_rate2, promo_assig)
@@ -23,15 +24,14 @@ class Gaussian_Enviroment(Enviroment):
     reward = 0
     for cust_class in range(len(self.n_customers)):
       customers = (np.random.randn()*np.sqrt(self.cust_var[cust_class]) + self.n_customers[cust_class]).astype(int)
-      if customers < 0:
-        customers=0
-      buyers = np.random.binomial(customers, self.conv_rate1[cust_class, pulled_arm])
-      reward += self.margin1[pulled_arm]*buyers
+      if customers > 0:
+        buyers = np.random.binomial(customers, self.conv_rate1[cust_class, pulled_arm])
+        reward += self.margin1[pulled_arm]*buyers/customers
+        if buyers > 0:
+          for promo in range(self.n_promos):
+            buyers2 = np.random.binomial(buyers*self.promo_assig[cust_class, promo], self.conv_rate2[cust_class, pulled_arm, promo])
+            reward += self.margin2[promo]*buyers2/(buyers*self.promo_assig[cust_class, promo])
 
-      for promo in range(self.n_promos):
-        buyers2 = np.random.binomial(buyers*self.promo_assig[cust_class, promo], self.conv_rate2[cust_class, pulled_arm, promo])
-        reward += self.margin2[promo]*buyers2
-        
     return reward
     
 def main():
