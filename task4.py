@@ -112,7 +112,7 @@ def main():
         """calculate and return expected value of reward for arm choices based on conversion rates"""
         reward = margin1[pulled_arm1] * conv_1[current_customer_class, pulled_arm1] * COST1
         if pulled_arm2 != -1:
-            promo = np.where(current_promo_assignment[current_customer_class] == 1)[0]
+            promo = np.argwhere(current_promo_assignment[current_customer_class] == 1)[0]
             reward += margin2[pulled_arm2, promo] * conv_1[current_customer_class, pulled_arm1]\
                 * conv_2[current_customer_class, pulled_arm2, promo] * COST2
         return reward
@@ -187,8 +187,8 @@ def main():
     print()
     print('LEARNING RESULTS RESULTS')
     print()
-    print(f'Total margin collected from product 1: {np.sum(rewards1)}')
-    print(f'Total margin collected from product 2: {np.sum(rewards2)}')
+    print(f'Total profit collected from product 1: {np.sum(rewards1)}')
+    print(f'Total profit collected from product 2: {np.sum(rewards2)}')
 
     fig, (ax1, ax2) = plt.subplots(2)
     ax1.plot(np.cumsum(rewards1), label='product 1')
