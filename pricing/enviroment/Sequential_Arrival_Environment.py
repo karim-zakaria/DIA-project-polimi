@@ -27,7 +27,7 @@ class SequentialArrivalEnvironment:
     def sub_round_2(self, customer_class, price_candidate, promo_assignment):
         """sample conversion based on customer class, price candidate and promo and return received reward
             used for sampling rewards for product 2"""
-        promo = np.where(promo_assignment[customer_class] == 1)[0]
+        promo = np.argwhere(promo_assignment[customer_class] == 1)[0]
         conv_sample = np.random.binomial(1, self.conv_rate2[customer_class, price_candidate, promo])
         reward = self.margin2[price_candidate, promo] * conv_sample
         return reward
