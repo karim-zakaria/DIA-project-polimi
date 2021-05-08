@@ -92,9 +92,9 @@ n_arms2 = int(conv_2.size / N_CLASSES / N_PROMOS)  # for disaggregate model n_ar
 
 def random_positive_choice(iterable):
     """random choice of index from non-zero elements of iterable"""
-    index = randrange(0, len(iterable))
-    while iterable[index] <= 0:
-        index = randrange(0, len(iterable))
+    iterable = np.array(iterable)
+    indices = np.argwhere(iterable > 0).reshape(-1)
+    index = np.random.choice(indices)
 
     return index
 
@@ -113,7 +113,8 @@ def main():
         reward = margin1[pulled_arm1] * conv_1[current_customer_class, pulled_arm1] * COST1
         if pulled_arm2 != -1:
             promo = np.where(current_promo_assignment[current_customer_class] == 1)[0]
-            reward += margin2[pulled_arm2, promo] * conv_2[current_customer_class, pulled_arm2, promo] * COST2
+            reward += margin2[pulled_arm2, promo] * conv_1[current_customer_class, pulled_arm1]\
+                * conv_2[current_customer_class, pulled_arm2, promo] * COST2
         return reward
 
     #
@@ -140,10 +141,9 @@ def main():
             customer_class = random_positive_choice(iterable=round_class_num)
             round_class_num[customer_class] -= 1
 
-            # pull price 1 arm, observe rewards and update arm
+            # pull price 1 arm, observe rewards
             arm1 = learner1.pull_arm()
             reward1 = environment.sub_round_1(customer_class, arm1)
-            learner1.update(arm1, reward1)
 
             # pull price 2 arm if positive reward and update else reward2 = 0
             if reward1 > 0:
@@ -153,6 +153,9 @@ def main():
             else:
                 reward2 = 0
                 arm2 = -1
+
+            # update learner 1
+            learner1.update(arm1, reward1+reward2)
 
             arms1.append(arm1)
             arms2.append(arm2)
@@ -190,15 +193,13 @@ def main():
     fig, (ax1, ax2) = plt.subplots(2)
     ax1.plot(np.cumsum(rewards1), label='product 1')
     ax2.plot(np.cumsum(rewards2), label='product 2')
-    plt.legend(loc='lower right')
     fig.suptitle('Cumulative Rewards from each product')
     plt.show()
 
     def moving_average(x, w):
         return np.convolve(x, np.ones(w), 'valid') / w
 
-    plt.plot(moving_average(rewards, 10), label='product 1')
-    plt.legend(loc='upper right')
+    plt.plot(moving_average(rewards, 10))
     plt.title('10-day moving average of rewards collected')
     plt.show()
 
