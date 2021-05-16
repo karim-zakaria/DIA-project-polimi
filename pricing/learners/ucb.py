@@ -57,10 +57,18 @@ class Matching_UCB(UCB):
         self.n_cols = n_cols
         assert n_arms == n_cols * n_rows
 
-    def pull_arms(self):
+    def pull_arms(self, promos_remaining):
         upper_conf = self.empirical_means + self.confidence
         upper_conf[np.isinf(upper_conf)] = 1e3
-        row_ind, col_ind = linear_sum_assignment(-upper_conf.reshape(self.n_rows, self.n_cols))
+        cost_matrix = -upper_conf.reshape(self.n_rows, self.n_cols)
+
+        # if there are no more promotion of a certain type we set the cost of that column as high as possible
+        for x in range(len(promos_remaining)):
+            if promos_remaining[x] == 0:
+                for y in range(self.n_rows):
+                    cost_matrix[y][x+self.n_rows] = np.inf # self.n_rows bcs we want to start from the first real promo
+
+        row_ind, col_ind = linear_sum_assignment(cost_matrix)
         return row_ind, col_ind
 
     def update(self, pulled_arms, rewards):

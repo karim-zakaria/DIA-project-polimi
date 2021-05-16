@@ -148,7 +148,7 @@ def main():
             # pull price 2 arm if positive reward and update else reward2 = 0
             if reward1 > 0:
                 arm2 = learner2.pull_arm()
-                reward2 = environment.sub_round_2(customer_class, arm2, promo_assignment)
+                reward2 = environment.sub_round_2(customer_class, arm2, 0)
                 learner2.update(arm2, reward2)
             else:
                 reward2 = 0
