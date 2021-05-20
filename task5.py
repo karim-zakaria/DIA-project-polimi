@@ -113,13 +113,12 @@ def main():
     all_promos = N_PROMOS + extra_promos
     learner2 = Matching_UCB(all_promos * N_CLASSES, N_CLASSES, all_promos)
 
-    def expected_value_of_reward(pulled_arm1, pulled_arm2, current_customer_class, current_promo_assignment):
+    def expected_value_of_reward(pulled_arm1, pulled_arm2, current_customer_class, curr_promo):
         """calculate and return expected value of reward for arm choices based on conversion rates"""
         reward = margin1[pulled_arm1] * conv_1[current_customer_class, pulled_arm1] * COST1
         if pulled_arm2 != -1:
-            promo = np.argwhere(current_promo_assignment[current_customer_class] == 1)[0]
-            reward += margin2[pulled_arm2, promo] * conv_1[current_customer_class, pulled_arm1] \
-                      * conv_2[current_customer_class, pulled_arm2, promo] * COST2
+            reward += margin2[pulled_arm2, curr_promo] * conv_1[current_customer_class, pulled_arm1] \
+                      * conv_2[current_customer_class, pulled_arm2, curr_promo] * COST2
         return reward
 
     #
@@ -138,7 +137,7 @@ def main():
         round_class_num = [int(n) if n >= 0 else 0 for n in round_class_num]
         daily_customer_amount = sum(round_class_num)
 
-        daily_promos = [n*daily_customer_amount for n in promo_ratio]
+        daily_promos = [n * daily_customer_amount for n in promo_ratio]
 
         # initialize variables for accumulating round rewards
         round_reward1 = 0
@@ -149,6 +148,7 @@ def main():
             # simulate customer arrival by random choice of class which has customers remaining for the day
             customer_class = random_positive_choice(iterable=round_class_num)
             round_class_num[customer_class] -= 1
+            chosen_promo = 0
 
             # pull price 1 arm, observe rewards
             arm1 = learner1.pull_arm()
@@ -157,19 +157,22 @@ def main():
             # pull price 2 arm if positive reward and update else reward2 = 0
             if reward1 > 0:
                 row_ind, col_ind = learner2.pull_arms(daily_promos)
-                chosen_promo = col_ind[customer_class]
-                daily_promos[chosen_promo] -= 1
+                chosen_promo = col_ind[customer_class] - extra_promos
+
+                if chosen_promo < 0:
+                    chosen_promo = 0
+                if chosen_promo > 0:
+                    daily_promos[chosen_promo - 1] -= 1  # daily_promos [#p1 #p2 #p3], chosen_promo [p0 p1 p2 p3]
 
                 reward2 = environment.sub_round_2(customer_class, 0,
-                                                  chosen_promo)  # The second parameter is 0 due to fixed prices
-
+                                                  chosen_promo)  # The second parameter is 0 due to fixed prices.  chosen_promo+1 since [p0 p1 p2 p3]
                 arm2 = customer_class * all_promos + chosen_promo
                 if chosen_promo <= extra_promos:
                     #  Update all arms that correspond to P0 for a given customer_class
-                    for promo in range(extra_promos+1):
-                        learner2.update(customer_class * all_promos + promo, reward2)
+                    for promo in range(extra_promos + 1):
+                        learner2.update_one(customer_class * all_promos + promo, reward2)
                 else:
-                    learner2.update(arm2, reward2)
+                    learner2.update_one(arm2, reward2)
             else:
                 reward2 = 0
                 arm2 = -1
@@ -183,10 +186,11 @@ def main():
             # add rewards to cumulative sums of round rewards and calculate expected rewards
             round_reward1 += reward1 * COST1
             round_reward2 += reward2 * COST2
-            round_expected_reward += expected_value_of_reward(arm1, arm2, customer_class, promo_assignment)
-            round_clairvoyant_expected += np.max([[expected_value_of_reward(i, j, customer_class, promo_assignment)
-                                                   for i in range(N_PRICES)]
-                                                  for j in range(N_PRICES)])
+            round_expected_reward += expected_value_of_reward(0, 0, customer_class, chosen_promo)  # first and
+            # second parameters are 0 due to fixed prices
+            round_clairvoyant_expected += np.max([[expected_value_of_reward(i, j, customer_class, chosen_promo)
+                                                   for i in range(1)]
+                                                  for j in range(1)])
 
         # append round rewards to lists of rewards
         rewards1.append(round_reward1)
@@ -196,10 +200,9 @@ def main():
 
     rewards1 = np.array(rewards1)
     rewards2 = np.array(rewards2)
-    expected_rewards = np.array(expected_rewards)[:, 0]
+    expected_rewards = np.array(expected_rewards)
     clairvoyant_expected_rewards = np.array(clairvoyant_expected_rewards)
     rewards = rewards1 + rewards2
-    rewards = rewards[:, 0]
 
     #
     # LEARNING RESULTS
