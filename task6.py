@@ -107,12 +107,12 @@ def main():
     # ENVIRONMENT DEFINITION
     environment = SequentialArrivalEnvironment(margin1=margin1, margin2=margin2, conv_rate1=conv_1, conv_rate2=conv_2)
 
-    # LEARNER DEFINITION
+        # LEARNER DEFINITION
     learner1 = UCB(n_arms1)
     extra_promos = N_CLASSES - 1  # we create additional copies of p0 as a hack for the linear sum assignment
     all_promos = N_PROMOS + extra_promos
-    learner2 = Matching_UCB(all_promos * N_CLASSES, N_CLASSES, all_promos)
-    learner3 = UCB(n_arms2)
+    #learner2 = Matching_UCB(all_promos * N_CLASSES, N_CLASSES, all_promos)
+    learner2 = [Matching_UCB(all_promos * N_CLASSES, N_CLASSES, all_promos) for i in range(n_arms2)]
 
     def expected_value_of_reward(pulled_arm1, pulled_arm2, current_customer_class, curr_promo):
         """calculate and return expected value of reward for arm choices based on conversion rates"""
@@ -154,30 +154,33 @@ def main():
 
             # pull price 1 arm, observe rewards
             arm1 = learner1.pull_arm()
-            reward1 = environment.sub_round_1(customer_class, 0)  # The second parameter is 0 due to fixed prices
+            reward1 = environment.sub_round_1(customer_class, arm1)  # The second parameter is 0 due to fixed prices
 
             # pull price 2 arm if positive reward and update else reward2 = 0
             if reward1 > 0:
-                row_ind, col_ind = learner2.pull_arms(daily_promos)
+
+                costs = [learner.pull_arms_2(daily_promos)[2] for learner in learner2]
+                arm3 = np.argmin(np.array(costs))
+
+                row_ind, col_ind = learner2[arm3].pull_arms_2(daily_promos)[0:2]
                 chosen_promo = col_ind[customer_class] - extra_promos
 
                 if chosen_promo < 0:
                     chosen_promo = 0
                 if chosen_promo > 0:
                     daily_promos[chosen_promo - 1] -= 1  # daily_promos [#p1 #p2 #p3], chosen_promo [p0 p1 p2 p3]
-                
-                arm3 = learner3.pull_arm()
+
+                #arm3 = learner3.pull_arm()
                 reward2 = environment.sub_round_2(customer_class, arm3,
                                                   chosen_promo)  # The second parameter is 0 due to fixed prices.  chosen_promo+1 since [p0 p1 p2 p3]
+                #learner3.update(arm3, reward1 + reward2)
                 arm2 = customer_class * all_promos + chosen_promo
-                learner3.update(arm3, reward1 + reward2)
-                
                 if chosen_promo <= extra_promos:
                     #  Update all arms that correspond to P0 for a given customer_class
                     for promo in range(extra_promos + 1):
-                        learner2.update_one(customer_class * all_promos + promo, reward2)
+                        learner2[arm3].update_one(customer_class * all_promos + promo, reward2)
                 else:
-                    learner2.update_one(arm2, reward2)
+                    learner2[arm3].update_one(arm2, reward2)
             else:
                 reward2 = 0
                 arm2 = -1
@@ -195,7 +198,7 @@ def main():
             round_expected_reward += expected_value_of_reward(0, 0, customer_class, chosen_promo)  # first and
             # second parameters are 0 due to fixed prices
             round_clairvoyant_expected += np.max([[expected_value_of_reward(i, j, customer_class, chosen_promo)
-                                                   for i in range(1)]
+                                                    for i in range(1)]
                                                   for j in range(1)])
 
         # append round rewards to lists of rewards
@@ -242,7 +245,7 @@ def main():
 
     plt.plot(moving_average(expected_rewards, 10), label='moving average of expected daily rewards')
     plt.plot(moving_average(clairvoyant_expected_rewards, 10), label='moving average reward of clairvoyant Algorithm',
-             color='r')
+              color='r')
     plt.legend(loc='lower right')
     plt.title('10-day moving average of expected rewards of each algorithm')
     plt.show()
