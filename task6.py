@@ -108,7 +108,7 @@ def main():
     environment = SequentialArrivalEnvironment(margin1=margin1, margin2=margin2, conv_rate1=conv_1, conv_rate2=conv_2)
 
         # LEARNER DEFINITION
-    learner1 = UCB(n_arms1)
+    learner1 = [UCB(n_arms1) for n in range(N_CLASSES)]
     extra_promos = N_CLASSES - 1  # we create additional copies of p0 as a hack for the linear sum assignment
     all_promos = N_PROMOS + extra_promos
     #learner2 = Matching_UCB(all_promos * N_CLASSES, N_CLASSES, all_promos)
@@ -153,7 +153,7 @@ def main():
             chosen_promo = 0
 
             # pull price 1 arm, observe rewards
-            arm1 = learner1.pull_arm()
+            arm1 = learner1[customer_class].pull_arm()
             reward1 = environment.sub_round_1(customer_class, arm1)  # The second parameter is 0 due to fixed prices
 
             # pull price 2 arm if positive reward and update else reward2 = 0
@@ -186,11 +186,11 @@ def main():
                 arm2 = -1
 
             # update learner 1
-            learner1.update(arm1, reward1 + reward2)
+            learner1[customer_class].update(arm1, reward1 + reward2)
 
             arms1.append(arm1)
             arms2.append(arm2)
-            arms3.append(arm3)
+            #arms3.append(arm3)
 
             # add rewards to cumulative sums of round rewards and calculate expected rewards
             round_reward1 += reward1 * COST1
