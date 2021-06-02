@@ -189,9 +189,8 @@ def main():
             round_reward2 += reward2 * COST2
             round_expected_reward += expected_value_of_reward(0, 0, customer_class, chosen_promo)  # first and
             # second parameters are 0 due to fixed prices
-            round_clairvoyant_expected += np.max([[expected_value_of_reward(i, j, customer_class, chosen_promo)
-                                                   for i in range(1)]
-                                                  for j in range(1)])
+            round_clairvoyant_expected += np.max([expected_value_of_reward(0, 0, customer_class, p)
+                                                   for p in range(N_PROMOS)])
 
         # append round rewards to lists of rewards
         rewards1.append(round_reward1)

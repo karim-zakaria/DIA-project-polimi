@@ -187,6 +187,7 @@ def main():
             else:
                 reward2 = 0
                 arm2 = -1
+                chosen_price_2 = -1
 
             # update learner 1
             learner1[customer_class].update(arm1, reward1 + reward2)
@@ -198,11 +199,12 @@ def main():
             # add rewards to cumulative sums of round rewards and calculate expected rewards
             round_reward1 += reward1 * COST1
             round_reward2 += reward2 * COST2
-            round_expected_reward += expected_value_of_reward(0, 0, customer_class, chosen_promo)  # first and
+            round_expected_reward += expected_value_of_reward(arm1, chosen_price_2, customer_class, chosen_promo)  # first and
             # second parameters are 0 due to fixed prices
-            round_clairvoyant_expected += np.max([[expected_value_of_reward(i, j, customer_class, chosen_promo)
-                                                   for i in range(1)]
-                                                  for j in range(1)])
+            round_clairvoyant_expected += np.max([[[expected_value_of_reward(i, j, customer_class, p)
+                                                   for i in range(N_PRICES)]
+                                                  for j in range(N_PRICES)]
+                                                 for p in range(N_PROMOS)])
 
         # append round rewards to lists of rewards
         rewards1.append(round_reward1)
