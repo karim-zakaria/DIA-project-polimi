@@ -83,8 +83,8 @@ promo_dist = promo_dist_1
 
 promo_assignment = np.array([[1, 0, 0, 0],
                              [0, 1, 0, 0],
-                             [0, 0, 0, 1],
-                             [0, 0, 1, 0]])
+                             [0, 0, 1, 0],
+                             [0, 0, 0, 1]])
 
 n_arms1 = int(conv_1.size / N_CLASSES)  # for disaggregate model n_arms1 = conv_1.size
 n_arms2 = int(conv_2.size / N_CLASSES / N_PROMOS)  # for disaggregate model n_arms2 = conv_2.size
@@ -179,7 +179,6 @@ def main():
     expected_rewards = np.array(expected_rewards)[:, 0]
     clairvoyant_expected_rewards = np.array(clairvoyant_expected_rewards)
     rewards = rewards1 + rewards2
-    rewards = rewards[:, 0]
 
     #
     # LEARNING RESULTS
