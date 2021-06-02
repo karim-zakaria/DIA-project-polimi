@@ -77,12 +77,10 @@ conv_2 = np.array([[[0.57, 0.6, 0.67, 0.69],
 
 # two alternative settings for number of promos of each class
 N_PROMOS = 4
-promo_dist_1 = np.array([150, 75, 125])
-promo_dist_2 = np.array([125, 175, 100])
-promo_dist = promo_dist_1
+promo_setting_1 = np.array([0.3, 0.15, 0.25])
+promo_setting_2 = np.array([0.25, 0.35, 0.2])
 
-total_promos = sum(promo_dist)
-promo_ratio = promo_dist / total_promos
+promo_setting = promo_setting_1
 
 promo_assignment = np.array([[1, 0, 0, 0],
                              [0, 1, 0, 0],
@@ -106,6 +104,9 @@ def random_positive_choice(iterable):
 def main():
     # ENVIRONMENT DEFINITION
     environment = SequentialArrivalEnvironment(margin1=margin1, margin2=margin2, conv_rate1=conv_1, conv_rate2=conv_2)
+
+    # initialize variable for average of daily customers per day to calculate number of promos
+    empirical_customer_amount = 300
 
     # LEARNER DEFINITION
     learner1 = UCB(N_CLASSES)
@@ -137,7 +138,7 @@ def main():
         round_class_num = [int(n) if n >= 0 else 0 for n in round_class_num]
         daily_customer_amount = sum(round_class_num)
 
-        daily_promos = [n * daily_customer_amount for n in promo_ratio]
+        daily_promos = [n * empirical_customer_amount for n in promo_setting]
 
         # initialize variables for accumulating round rewards
         round_reward1 = 0
@@ -197,6 +198,9 @@ def main():
         rewards2.append(round_reward2)
         expected_rewards.append(round_expected_reward)
         clairvoyant_expected_rewards.append(round_clairvoyant_expected)
+
+        # update empirical number of customers per day
+        empirical_customer_amount = (empirical_customer_amount * i + daily_customer_amount)/(i + 1)
 
     rewards1 = np.array(rewards1)
     rewards2 = np.array(rewards2)
