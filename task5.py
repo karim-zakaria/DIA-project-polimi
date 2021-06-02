@@ -168,7 +168,7 @@ def main():
                 reward2 = environment.sub_round_2(customer_class, 0,
                                                   chosen_promo)  # The second parameter is 0 due to fixed prices.  chosen_promo+1 since [p0 p1 p2 p3]
                 arm2 = customer_class * all_promos + chosen_promo
-                if chosen_promo <= extra_promos:
+                if chosen_promo == 0:
                     #  Update all arms that correspond to P0 for a given customer_class
                     for promo in range(extra_promos + 1):
                         learner2.update_one(customer_class * all_promos + promo, reward2)
