@@ -51,10 +51,11 @@ class SW_UCB(UCB):
 
 
 class Matching_UCB(UCB):
-    def __init__(self, n_arms, n_rows, n_cols):
+    def __init__(self, n_arms, n_rows, n_cols, col_promo):
         super().__init__(n_arms)
         self.n_rows = n_rows
         self.n_cols = n_cols
+        self.col_promo = col_promo
         assert n_arms == n_cols * n_rows
 
     def pull_arms(self, promos_remaining):
@@ -63,10 +64,11 @@ class Matching_UCB(UCB):
         cost_matrix = -upper_conf.reshape(self.n_rows, self.n_cols)
 
         # if there are no more promotion of a certain type we set the cost of that column as high as possible
-        for x in range(len(promos_remaining)):
-            if promos_remaining[x] == 0:
-                for y in range(self.n_rows):
-                    cost_matrix[y][x+self.n_rows] = np.inf # self.n_rows bcs we want to start from the first real promo
+        for c in range(self.n_cols):
+            if self.col_promo[c] != 0:
+                if promos_remaining[self.col_promo[c]-1] == 0:
+                    for r in range(self.n_rows):
+                        cost_matrix[r][c] = np.inf
 
         row_ind, col_ind = linear_sum_assignment(cost_matrix)
         return row_ind, col_ind

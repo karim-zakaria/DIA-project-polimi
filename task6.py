@@ -87,6 +87,8 @@ promo_assignment = np.array([[1, 0, 0, 0],
                              [0, 0, 0, 1],
                              [0, 0, 1, 0]])
 
+col_promo = [0, 0, 0, 0, 1, 2, 3]
+
 n_arms1 = int(conv_1.size / N_CLASSES)  # for disaggregate model n_arms1 = conv_1.size
 n_arms2 = int(conv_2.size / N_CLASSES / N_PROMOS)  # for disaggregate model n_arms2 = conv_2.size
 
@@ -112,7 +114,7 @@ def main():
     learner1 = [UCB(n_arms1) for n in range(N_CLASSES)]
     extra_promos = N_CLASSES - 1  # we create additional copies of p0 as a hack for the linear sum assignment
     all_promos = N_PROMOS + extra_promos
-    learner2 = Matching_UCB(all_promos * N_CLASSES * N_PRICES, N_CLASSES, all_promos * N_PRICES)
+    learner2 = Matching_UCB(all_promos * N_CLASSES * N_PRICES, N_CLASSES, all_promos * N_PRICES, col_promo * N_PRICES)
     # learner2 = [Matching_UCB(all_promos * N_CLASSES, N_CLASSES, all_promos) for i in range(n_arms2)]
 
     def expected_value_of_reward(pulled_arm1, pulled_arm2, current_customer_class, curr_promo):
