@@ -12,7 +12,7 @@ random.seed(41148)
 # time horizon
 T = 365
 N_PHASES = 2
-PHASE_LENGTH = int(T/N_PHASES)
+PHASE_LENGTH = int(T / N_PHASES)
 WINDOW_SIZE = int(np.sqrt(T))
 
 # number of customers of each class
@@ -43,9 +43,9 @@ margin2 = np.array([[20, 13, 6, 2.5],
 
 # conversion of each class for each price candidate of product 1
 conv_1 = np.array([[[0.45, 0.6, 0.57, 0.52, 0.37, 0.15, 0.08],
-                   [0.5, 0.55, 0.51, 0.47, 0.42, 0.35, 0.21],
-                   [0.45, 0.42, 0.35, 0.27, 0.14, 0.1, 0.05],
-                   [0.65, 0.7, 0.67, 0.55, 0.3, 0.21, 0.11]],
+                    [0.5, 0.55, 0.51, 0.47, 0.42, 0.35, 0.21],
+                    [0.45, 0.42, 0.35, 0.27, 0.14, 0.1, 0.05],
+                    [0.65, 0.7, 0.67, 0.55, 0.3, 0.21, 0.11]],
 
                    [[0.45, 0.6, 0.57, 0.52, 0.37, 0.15, 0.08],
                     [0.5, 0.55, 0.51, 0.47, 0.42, 0.35, 0.21],
@@ -54,33 +54,33 @@ conv_1 = np.array([[[0.45, 0.6, 0.57, 0.52, 0.37, 0.15, 0.08],
 
 # conversion of each class for each price candidate (axis 0) and promo (axis 1) of product 2
 conv_2 = np.array([[[[0.57, 0.6, 0.67, 0.69],
-                    [0.55, 0.58, 0.65, 0.67],
-                    [0.53, 0.56, 0.6, 0.65],
-                    [0.48, 0.55, 0.58, 0.6],
-                    [0.46, 0.53, 0.56, 0.58],
-                    [0.43, 0.48, 0.55, 0.56],
-                    [0.32, 0.46, 0.53, 0.55]],
-                   [[0.38, 0.4, 0.49, 0.53],
-                    [0.35, 0.39, 0.43, 0.49],
-                    [0.31, 0.37, 0.4, 0.43],
-                    [0.25, 0.35, 0.39, 0.4],
-                    [0.22, 0.31, 0.37, 0.39],
-                    [0.2, 0.25, 0.35, 0.37],
-                    [0.18, 0.22, 0.31, 0.35]],
-                   [[0.17, 0.24, 0.37, 0.39],
-                    [0.12, 0.2, 0.3, 0.36],
-                    [0.08, 0.15, 0.23, 0.3],
-                    [0.06, 0.12, 0.2, 0.23],
-                    [0.06, 0.08, 0.15, 0.2],
-                    [0.05, 0.06, 0.12, 0.16],
-                    [0.04, 0.06, 0.08, 0.12]],
-                   [[0.49, 0.53, 0.65, 0.68],
-                    [0.35, 0.5, 0.55, 0.65],
-                    [0.29, 0.46, 0.52, 0.55],
-                    [0.25, 0.34, 0.5, 0.52],
-                    [0.21, 0.29, 0.46, 0.5],
-                    [0.18, 0.25, 0.34, 0.46],
-                    [0.15, 0.21, 0.26, 0.35]]],
+                     [0.55, 0.58, 0.65, 0.67],
+                     [0.53, 0.56, 0.6, 0.65],
+                     [0.48, 0.55, 0.58, 0.6],
+                     [0.46, 0.53, 0.56, 0.58],
+                     [0.43, 0.48, 0.55, 0.56],
+                     [0.32, 0.46, 0.53, 0.55]],
+                    [[0.38, 0.4, 0.49, 0.53],
+                     [0.35, 0.39, 0.43, 0.49],
+                     [0.31, 0.37, 0.4, 0.43],
+                     [0.25, 0.35, 0.39, 0.4],
+                     [0.22, 0.31, 0.37, 0.39],
+                     [0.2, 0.25, 0.35, 0.37],
+                     [0.18, 0.22, 0.31, 0.35]],
+                    [[0.17, 0.24, 0.37, 0.39],
+                     [0.12, 0.2, 0.3, 0.36],
+                     [0.08, 0.15, 0.23, 0.3],
+                     [0.06, 0.12, 0.2, 0.23],
+                     [0.06, 0.08, 0.15, 0.2],
+                     [0.05, 0.06, 0.12, 0.16],
+                     [0.04, 0.06, 0.08, 0.12]],
+                    [[0.49, 0.53, 0.65, 0.68],
+                     [0.35, 0.5, 0.55, 0.65],
+                     [0.29, 0.46, 0.52, 0.55],
+                     [0.25, 0.34, 0.5, 0.52],
+                     [0.21, 0.29, 0.46, 0.5],
+                     [0.18, 0.25, 0.34, 0.46],
+                     [0.15, 0.21, 0.26, 0.35]]],
 
                    [[[0.57, 0.6, 0.67, 0.69],
                      [0.55, 0.58, 0.65, 0.67],
@@ -126,7 +126,6 @@ promo_assignment = np.array([[1, 0, 0, 0],
 col_promo = [0, 0, 0, 0, 1, 2, 3]
 
 
-
 def random_positive_choice(iterable):
     """random choice of index from non-zero elements of iterable"""
     iterable = np.array(iterable)
@@ -136,10 +135,20 @@ def random_positive_choice(iterable):
     return index
 
 
+def expected_value_of_reward(pulled_arm1, pulled_arm2, current_customer_class, curr_promo, current_phase):
+    """calculate and return expected value of reward for arm choices based on conversion rates"""
+    reward = margin1[pulled_arm1] * conv_1[current_phase, current_customer_class, pulled_arm1] * COST1
+    if pulled_arm2 != -1:
+        reward += margin2[pulled_arm2, curr_promo] * conv_1[current_phase, current_customer_class, pulled_arm1] \
+                  * conv_2[current_phase, current_customer_class, pulled_arm2, curr_promo] * COST2
+    return reward
+
+
 # Task 4
 def main():
     # ENVIRONMENT DEFINITION
-    environment = NonStationarySequentialEnvironment(margin1=margin1, margin2=margin2, conv_rate1=conv_1, conv_rate2=conv_2, horizon=T, n_phases=N_PHASES)
+    environment = NonStationarySequentialEnvironment(margin1=margin1, margin2=margin2, conv_rate1=conv_1,
+                                                     conv_rate2=conv_2, horizon=T, n_phases=N_PHASES)
 
     # initialize variable for average of daily customers per day to calculate number of promos
     empirical_customer_amount = 0
@@ -148,15 +157,8 @@ def main():
     learner1 = [SW_UCB(N_PRICES, WINDOW_SIZE) for n in range(N_CLASSES)]
     extra_promos = N_CLASSES - 1  # we create additional copies of p0 as a hack for the linear sum assignment
     all_promos = N_PROMOS + extra_promos
-    learner2 = SW_Matching_UCB(all_promos * N_CLASSES * N_PRICES, N_CLASSES, all_promos * N_PRICES, col_promo * N_PRICES, WINDOW_SIZE)
-
-    def expected_value_of_reward(pulled_arm1, pulled_arm2, current_customer_class, curr_promo, current_phase):
-        """calculate and return expected value of reward for arm choices based on conversion rates"""
-        reward = margin1[pulled_arm1] * conv_1[current_phase, current_customer_class, pulled_arm1] * COST1
-        if pulled_arm2 != -1:
-            reward += margin2[pulled_arm2, curr_promo] * conv_1[current_phase, current_customer_class, pulled_arm1] \
-                      * conv_2[current_phase, current_customer_class, pulled_arm2, curr_promo] * COST2
-        return reward
+    learner2 = SW_Matching_UCB(all_promos * N_CLASSES * N_PRICES, N_CLASSES, all_promos * N_PRICES,
+                               col_promo * N_PRICES, WINDOW_SIZE)
 
     #
     # START LEARNING PROCESS
@@ -235,12 +237,13 @@ def main():
             # add rewards to cumulative sums of round rewards and calculate expected rewards
             round_reward1 += reward1 * COST1
             round_reward2 += reward2 * COST2
-            round_expected_reward += expected_value_of_reward(arm1, chosen_price_2, customer_class, chosen_promo, current_phase)  # first and
+            round_expected_reward += expected_value_of_reward(arm1, chosen_price_2, customer_class, chosen_promo,
+                                                              current_phase)  # first and
             # second parameters are 0 due to fixed prices
-            round_clairvoyant_expected += np.max([[[expected_value_of_reward(i, j, customer_class, p,  current_phase)
-                                                   for i in range(N_PRICES)]
-                                                  for j in range(N_PRICES)]
-                                                 for p in range(N_PROMOS)])
+            round_clairvoyant_expected += np.max([[[expected_value_of_reward(i, j, customer_class, p, current_phase)
+                                                    for i in range(N_PRICES)]
+                                                   for j in range(N_PRICES)]
+                                                  for p in range(N_PROMOS)])
 
         # append round rewards to lists of rewards
         rewards1.append(round_reward1)
@@ -254,8 +257,8 @@ def main():
         # increment time of environment and learners
         environment.t += 1
         for l in range(len(learner1)):
-            learner1[l].round += 1
-        learner2.round += 1
+            learner1[l].end_round()
+        learner2.end_round()
 
     rewards1 = np.array(rewards1)
     rewards2 = np.array(rewards2)
@@ -293,7 +296,7 @@ def main():
     print()
     print(f'Total expected regret: {np.sum(np.subtract(clairvoyant_expected_rewards, expected_rewards))}')
 
-    plt.plot(moving_average(expected_rewards, 10), label='moving average of expected daily rewards')
+    plt.plot(moving_average(rewards, 10), label='moving average of expected daily rewards')
     plt.plot(moving_average(clairvoyant_expected_rewards, 10), label='moving average reward of clairvoyant Algorithm',
              color='r')
     plt.legend(loc='lower right')
