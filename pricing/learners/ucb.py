@@ -27,32 +27,38 @@ class SW_UCB(UCB):
     def __init__(self, n_arms, window_size):
         super().__init__(n_arms)
         self.window_size = window_size
-        self.round = 0
 
-    def update(self, pull_arm, reward):
-        self.t += 1
-        self.empirical_means[pull_arm] = (self.empirical_means[pull_arm] * (self.t - 1) + reward) / self.t
+    def update(self, pulled_arm, reward):
+        total_samples = 0
+        for a in range(self.n_arms):
+            total_samples += len(self.rewards_per_arm[a])
         for a in range(self.n_arms):
             self.clear_outside_window_rewards(a)
             n_samples = len(self.rewards_per_arm[a])
-            self.confidence[a] = (2 * np.log(self.t) / n_samples) ** 0.5 if n_samples > 0 else np.inf
-        self.update_observations(pull_arm, reward)
+            self.confidence[a] = (2 * np.log(total_samples) / n_samples) ** 0.5 if n_samples > 0 else np.inf
+        self.update_observations(pulled_arm, reward)
+
 
     # Remove rewards that are outside of the window for a given arm. Since the array is ordered by the timestamp and
     # we execute this function every round, we only need to check the timestamp of the first element
     def clear_outside_window_rewards(self, arm):
         if len(self.rewards_per_arm[arm]) == 0:
             return
-        first_elem_timestamp = self.rewards_per_arm[arm][0][1]
-        while first_elem_timestamp < (self.round - self.window_size):
-            self.rewards_per_arm[arm].pop()
-            if len(self.rewards_per_arm[arm]) == 0:
-                return
-            first_elem_timestamp = self.rewards_per_arm[arm][0][1]
+        min_timestamp = self.t - self.window_size
+        temp_reward_list = []
+        for r in self.rewards_per_arm[arm]:
+            if r[1] >= min_timestamp:
+                temp_reward_list.append(r)
+        self.rewards_per_arm[arm] = temp_reward_list
+        if len(temp_reward_list) > 0:
+            self.empirical_means[arm] = np.mean(np.array([r[0] for r in self.rewards_per_arm[arm]]))
+        else:
+            self.empirical_means[arm] = 0
 
     def update_observations(self, pulled_arm, reward):
-        self.rewards_per_arm[pulled_arm].append((reward, self.round))  # add a timestamp when an arm has been pulled
+        self.rewards_per_arm[pulled_arm].append((reward, self.t))  # add a timestamp when an arm has been pulled
         self.collected_rewards = np.append(self.collected_rewards, reward)
+
 
 
 class Matching_UCB(UCB):
@@ -106,31 +112,36 @@ class SW_Matching_UCB(Matching_UCB):
     def __init__(self, n_arms, n_rows, n_cols, col_promo, window_size):
         super().__init__(n_arms, n_rows, n_cols, col_promo)
         self.window_size = window_size
-        self.round = 0
 
     def update_one(self, pulled_arm, reward):
-        self.t += 1
-        self.empirical_means[pulled_arm] = (self.empirical_means[pulled_arm] * (self.t - 1) + reward) / self.t
+        total_samples = 0
+        for a in range(self.n_arms):
+            total_samples += len(self.rewards_per_arm[a])
         for a in range(self.n_arms):
             self.clear_outside_window_rewards(a)
             n_samples = len(self.rewards_per_arm[a])
-            self.confidence[a] = (2 * np.log(self.t) / n_samples) ** 0.5 if n_samples > 0 else np.inf
+            self.confidence[a] = (2 * np.log(total_samples) / n_samples) ** 0.5 if n_samples > 0 else np.inf
         self.update_observations(pulled_arm, reward)
+
 
     # Remove rewards that are outside of the window for a given arm. Since the array is ordered by the timestamp and
     # we execute this function every round, we only need to check the timestamp of the first element
     def clear_outside_window_rewards(self, arm):
         if len(self.rewards_per_arm[arm]) == 0:
             return
-        first_elem_timestamp = self.rewards_per_arm[arm][0][1]
-        while first_elem_timestamp < (self.round - self.window_size):
-            self.rewards_per_arm[arm].pop()
-            if len(self.rewards_per_arm[arm]) == 0:
-                return
-            first_elem_timestamp = self.rewards_per_arm[arm][0][1]
+        min_timestamp = self.t - self.window_size
+        temp_reward_list = []
+        for r in self.rewards_per_arm[arm]:
+            if r[1] >= min_timestamp:
+                temp_reward_list.append(r)
+        self.rewards_per_arm[arm] = temp_reward_list
+        if len(temp_reward_list) > 0:
+            self.empirical_means[arm] = np.mean(np.array([r[0] for r in self.rewards_per_arm[arm]]))
+        else:
+            self.empirical_means[arm] = 0
 
     def update_observations(self, pulled_arm, reward):
-        self.rewards_per_arm[pulled_arm].append((reward, self.round))  # add a timestamp when an arm has been pulled
+        self.rewards_per_arm[pulled_arm].append((reward, self.t))  # add a timestamp when an arm has been pulled
         self.collected_rewards = np.append(self.collected_rewards, reward)
 
 
