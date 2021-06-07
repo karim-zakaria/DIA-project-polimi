@@ -31,3 +31,32 @@ class SequentialArrivalEnvironment:
         reward = self.margin2[price_candidate, promo] * conv_sample
         return reward
 
+class NonStationarySequentialArrivalEnvironment:
+    def __init__(self, margin1, margin2, conv_rate1, conv_rate2, horizon, n_phases):
+        self.margin1 = margin1
+        self.margin2 = margin2
+        self.conv_rate1 = conv_rate1
+        self.conv_rate2 = conv_rate2
+        self.t = 0
+        self.n_phases = n_phases
+        self.phase_size = horizon/n_phases
+        self.current_phase = 0
+
+    def sub_round_1(self, customer_class, price_candidate):
+        """sample conversion based on customer class and price candidate and return received reward
+            used for sampling rewards for product 1"""
+        conv_sample = np.random.binomial(1, self.conv_rate1[customer_class, price_candidate, self.current_phase])
+        reward = self.margin1[price_candidate] * conv_sample
+        return reward
+
+    def sub_round_2(self, customer_class, price_candidate, promo):
+        """sample conversion based on customer class, price candidate and promo and return received reward
+            used for sampling rewards for product 2"""
+        conv_sample = np.random.binomial(1, self.conv_rate2[customer_class, price_candidate, promo, self.current_phase])
+        reward = self.margin2[price_candidate, promo] * conv_sample
+        return reward
+
+    def update(self):
+        self.t += 1
+        self.current_phase = int(self.t / self.phase_size)
+        self.current_phase = 0 if self.current_phase >= self.n_phases else self.current_phase
