@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from pricing.learners.ucb import CUMSUM_UCB, CUMSUM_Matching_UCB
-from pricing.enviroment.Sequential_Arrival_Environment import NonStationarySequentialArrivalEnvironment
+from pricing.enviroment.Non_Stationary_Sequential_Environment import NonStationarySequentialEnvironment
 
 np.random.seed(41148)
 random.seed(41148)
@@ -61,9 +61,9 @@ conv_1_2 = np.array([[0.45, 0.6, 0.57, 0.52, 0.37, 0.15, 0.08],
                    [0.5, 0.55, 0.51, 0.47, 0.42, 0.35, 0.21],
                    [0.45, 0.42, 0.35, 0.27, 0.14, 0.1, 0.05],
                    [0.65, 0.7, 0.67, 0.55, 0.3, 0.21, 0.11]])
-conv_1 = np.zeros((N_CLASSES,N_PRICES,N_PHASES))
-conv_1[:,:,0] = conv_1_1
-conv_1[:,:,1] = conv_1_2
+conv_1 = np.zeros((N_PHASES,N_CLASSES,N_PRICES))
+conv_1[0,:,:] = conv_1_1
+conv_1[1,:,:] = conv_1_2
 
 # conversion of each class for each price candidate (axis 0) and promo (axis 1) of product 2
 #phase 1
@@ -124,9 +124,9 @@ conv_2_2 = np.array([[[0.38, 0.4, 0.49, 0.53],
                     [0.06, 0.08, 0.15, 0.2],
                     [0.05, 0.06, 0.12, 0.16],
                     [0.04, 0.06, 0.08, 0.12]]])
-conv_2 = np.zeros((N_CLASSES,N_PRICES,N_PROMOS,N_PHASES))
-conv_2[:,:,:,0] = conv_2_1
-conv_2[:,:,:,1] = conv_2_2
+conv_2 = np.zeros((N_PHASES,N_CLASSES,N_PRICES,N_PROMOS))
+conv_2[0,:,:,:] = conv_2_1
+conv_2[1,:,:,:] = conv_2_2
 
 n_arms1 = int(conv_1.size / N_CLASSES / N_PHASES)  # for disaggregate model n_arms1 = conv_1.size
 n_arms2 = int(conv_2.size / N_CLASSES / N_PROMOS / N_PHASES)  # for disaggregate model n_arms2 = conv_2.size
@@ -144,16 +144,16 @@ def random_positive_choice(iterable):
 # Task 8
 def main():
     # ENVIRONMENT DEFINITION
-    environment = NonStationarySequentialArrivalEnvironment(margin1=margin1, margin2=margin2, conv_rate1=conv_1, conv_rate2=conv_2, horizon=PHASE_HORIZON, n_phases=N_PHASES)
+    environment = NonStationarySequentialEnvironment(margin1=margin1, margin2=margin2, conv_rate1=conv_1, conv_rate2=conv_2, horizon=PHASE_HORIZON, n_phases=N_PHASES)
 
     # initialize variable for average of daily customers per day to calculate number of promos
     empirical_customer_amount = 300
 
     # LEARNER DEFINITION
-    learner1 = [CUMSUM_UCB(n_arms1,M=1000) for n in range(N_CLASSES)]
+    learner1 = [CUMSUM_UCB(n_arms1,M=1000,alpha=0.001) for n in range(N_CLASSES)]
     extra_promos = N_CLASSES - 1  # we create additional copies of p0 as a hack for the linear sum assignment
     all_promos = N_PROMOS + extra_promos
-    learner2 = CUMSUM_Matching_UCB(all_promos * N_CLASSES * N_PRICES, N_CLASSES, all_promos * N_PRICES, col_promo * N_PRICES,M=1000)
+    learner2 = CUMSUM_Matching_UCB(all_promos * N_CLASSES * N_PRICES, N_CLASSES, all_promos * N_PRICES, col_promo * N_PRICES,M=1000,alpha=0.001)
 
     def expected_value_of_reward(pulled_arm1, pulled_arm2, current_customer_class, curr_promo, curr_phase):
         """calculate and return expected value of reward for arm choices based on conversion rates"""
@@ -161,17 +161,17 @@ def main():
         #we need to take into account the proportion of promo codes available impose by the promo setting 
         # in the expected conversion rate and margin (promo 0 is no promo)
         if curr_promo != 0:
-            conv_promo = promo_setting[curr_promo-1]*conv_2[current_customer_class, pulled_arm2, curr_promo, curr_phase] \
-                        + (1-promo_setting[curr_promo-1])*conv_2[current_customer_class, pulled_arm2, 0, curr_phase] 
+            conv_promo = promo_setting[curr_promo-1]*conv_2[curr_phase, current_customer_class, pulled_arm2, curr_promo] \
+                        + (1-promo_setting[curr_promo-1])*conv_2[curr_phase, current_customer_class, pulled_arm2, 0] 
             margin_promo = promo_setting[curr_promo-1]*margin2[pulled_arm2, curr_promo] \
                         + (1-promo_setting[curr_promo-1])*margin2[pulled_arm2, 0]
         else:
-            conv_promo = conv_2[current_customer_class, pulled_arm2, curr_promo, curr_phase]
+            conv_promo = conv_2[curr_phase, current_customer_class, pulled_arm2, curr_promo]
             margin_promo = margin2[pulled_arm2, curr_promo]
 
-        reward = margin1[pulled_arm1] * conv_1[current_customer_class, pulled_arm1, curr_phase] * COST1
+        reward = margin1[pulled_arm1] * conv_1[curr_phase, current_customer_class, pulled_arm1] * COST1
         if pulled_arm2 != -1:
-            reward += margin_promo * conv_1[current_customer_class, pulled_arm1, curr_phase] \
+            reward += margin_promo * conv_1[curr_phase, current_customer_class, pulled_arm1] \
                     * conv_promo * COST2
         return reward
 
@@ -273,7 +273,7 @@ def main():
     # LEARNING RESULTS
     #
     print()
-    print('LEARNING RESULTS RESULTS')
+    print('LEARNING RESULTS')
     print()
     print(f'Total profit collected from product 1: {np.sum(rewards1)}')
     print(f'Total profit collected from product 2: {np.sum(rewards2)}')
