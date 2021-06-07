@@ -13,7 +13,7 @@ random.seed(41148)
 T = 365
 N_PHASES = 2
 PHASE_LENGTH = int(T / N_PHASES)
-WINDOW_SIZE = int(np.sqrt(T))
+
 
 # number of customers of each class
 N_CLASSES = 4
@@ -135,12 +135,24 @@ def random_positive_choice(iterable):
     return index
 
 
-def expected_value_of_reward(pulled_arm1, pulled_arm2, current_customer_class, curr_promo, current_phase):
+def expected_value_of_reward(pulled_arm1, pulled_arm2, current_customer_class, curr_promo, curr_phase):
     """calculate and return expected value of reward for arm choices based on conversion rates"""
-    reward = margin1[pulled_arm1] * conv_1[current_phase, current_customer_class, pulled_arm1] * COST1
+
+    # we need to take into account the proportion of promo codes available impose by the promo setting
+    # in the expected conversion rate and margin (promo 0 is no promo)
+    if curr_promo != 0:
+        conv_promo = promo_setting[curr_promo - 1] * conv_2[curr_phase, current_customer_class, pulled_arm2, curr_promo] \
+                     + (1 - promo_setting[curr_promo - 1]) * conv_2[curr_phase, current_customer_class, pulled_arm2, 0]
+        margin_promo = promo_setting[curr_promo - 1] * margin2[pulled_arm2, curr_promo] \
+                       + (1 - promo_setting[curr_promo - 1]) * margin2[pulled_arm2, 0]
+    else:
+        conv_promo = conv_2[curr_phase, current_customer_class, pulled_arm2, curr_promo]
+        margin_promo = margin2[pulled_arm2, curr_promo]
+
+    reward = margin1[pulled_arm1] * conv_1[curr_phase, current_customer_class, pulled_arm1] * COST1
     if pulled_arm2 != -1:
-        reward += margin2[pulled_arm2, curr_promo] * conv_1[current_phase, current_customer_class, pulled_arm1] \
-                  * conv_2[current_phase, current_customer_class, pulled_arm2, curr_promo] * COST2
+        reward += margin_promo * conv_1[curr_phase, current_customer_class, pulled_arm1] \
+                  * conv_promo * COST2
     return reward
 
 
@@ -151,14 +163,15 @@ def main():
                                                      conv_rate2=conv_2, horizon=T, n_phases=N_PHASES)
 
     # initialize variable for average of daily customers per day to calculate number of promos
-    empirical_customer_amount = 0
+    empirical_customer_amount = 500
+    window_size = np.sqrt(T)*empirical_customer_amount
 
     # LEARNER DEFINITION
-    learner1 = [SW_UCB(N_PRICES, WINDOW_SIZE) for n in range(N_CLASSES)]
+    learner1 = [SW_UCB(N_PRICES, window_size) for n in range(N_CLASSES)]
     extra_promos = N_CLASSES - 1  # we create additional copies of p0 as a hack for the linear sum assignment
     all_promos = N_PROMOS + extra_promos
     learner2 = SW_Matching_UCB(all_promos * N_CLASSES * N_PRICES, N_CLASSES, all_promos * N_PRICES,
-                               col_promo * N_PRICES, WINDOW_SIZE)
+                               col_promo * N_PRICES, window_size)
 
     #
     # START LEARNING PROCESS
@@ -245,6 +258,10 @@ def main():
                                                    for j in range(N_PRICES)]
                                                   for p in range(N_PROMOS)])
 
+            for l in learner1:
+                l.t += 1
+            learner2.t += 1
+
         # append round rewards to lists of rewards
         rewards1.append(round_reward1)
         rewards2.append(round_reward2)
@@ -253,12 +270,12 @@ def main():
 
         # update empirical number of customers per day
         empirical_customer_amount = (empirical_customer_amount * i + daily_customer_amount) / (i + 1)
+        window_size = np.sqrt(T) * empirical_customer_amount
+        for l in learner1:
+            l.window_size = window_size
+        learner2.window_size = window_size
 
-        # increment time of environment and learners
         environment.t += 1
-        for l in range(len(learner1)):
-            learner1[l].end_round()
-        learner2.end_round()
 
     rewards1 = np.array(rewards1)
     rewards2 = np.array(rewards2)
