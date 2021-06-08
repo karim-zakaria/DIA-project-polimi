@@ -30,4 +30,3 @@ class SequentialArrivalEnvironment:
         conv_sample = np.random.binomial(1, self.conv_rate2[customer_class, price_candidate, promo])
         reward = self.margin2[price_candidate, promo] * conv_sample
         return reward
-

@@ -25,7 +25,7 @@ class UCB(Learner):
 
 class SW_UCB(UCB):
     def __init__(self, n_arms, window_size):
-        super().__init__(n_arms)
+        super(SW_UCB, self).__init__(n_arms)
         self.window_size = window_size
 
     def update(self, pulled_arm, reward):
@@ -59,6 +59,39 @@ class SW_UCB(UCB):
         self.rewards_per_arm[pulled_arm].append((reward, self.t))  # add a timestamp when an arm has been pulled
         self.collected_rewards = np.append(self.collected_rewards, reward)
 
+class CUMSUM_UCB(UCB):
+    def __init__(self, n_arms, M=100, eps=0.05, h=20, alpha=0.01):
+        super().__init__(n_arms)
+        self.change_detection = [CUMSUM(M, eps, h) for _ in range(n_arms)]
+        self.valid_rewards_per_arms = [[] for _ in range(n_arms)]
+        self.detections = [[] for _ in range(n_arms)]
+        self.alpha = alpha
+
+    def pull_arm(self):
+        if np.random.binomial(1, 1 - self.alpha):
+            return np.argmax(self.empirical_means + self.confidence)
+        else:
+            return np.random.randint(self.n_arms)
+
+    def update(self, pulled_arm, reward):
+        self.t += 1
+        if self.change_detection[pulled_arm].update(reward):
+            self.detections[pulled_arm].append(self.t)
+            self.valid_rewards_per_arms[pulled_arm] = []
+            self.change_detection[pulled_arm].reset()
+        self.update_observations(pulled_arm, reward)
+        self.empirical_means[pulled_arm] = np.mean(self.valid_rewards_per_arms[pulled_arm])
+        total_valid_samples = sum([len(x) for x in self.valid_rewards_per_arms])
+
+        for a in range(self.n_arms):
+            n_samples = len(self.valid_rewards_per_arms[a])
+            self.confidence[a] = (2 * np.log(total_valid_samples) / n_samples) ** 0.5 if n_samples > 0 else np.inf
+
+    def update_observations(self, pulled_arm, reward):
+        self.rewards_per_arm[pulled_arm].append(reward)
+        self.valid_rewards_per_arms[pulled_arm].append(reward)
+        self.collected_rewards = np.append(self.collected_rewards, reward)
+
 
 
 class Matching_UCB(UCB):
@@ -83,7 +116,7 @@ class Matching_UCB(UCB):
 
         row_ind, col_ind = linear_sum_assignment(cost_matrix)
         return row_ind, col_ind
-    
+
     def pull_arms_2(self, promos_remaining): #The only difference is that this function also returns the value of the objective function
         upper_conf = self.empirical_means + self.confidence
         upper_conf[np.isinf(upper_conf)] = 1e3
@@ -98,15 +131,18 @@ class Matching_UCB(UCB):
         row_ind, col_ind = linear_sum_assignment(cost_matrix)
         return row_ind, col_ind, cost_matrix[row_ind, col_ind].sum()
 
-    def update_one(self, pulled_arm, reward):
+    def update(self, pulled_arms, rewards):
         self.t += 1
+        pulled_arms_flat = np.ravel_multi_index(pulled_arms, (self.n_rows, self.n_cols))
 
-        self.update_observations(pulled_arm, reward)
-        self.empirical_means[pulled_arm] = (self.empirical_means[pulled_arm] * (self.t - 1) + reward) / self.t
+        for pulled_arm, reward in zip(pulled_arms_flat, rewards):
+            self.update_observations(pulled_arm, reward)
+            self.empirical_means[pulled_arm] = (self.empirical_means[pulled_arm] * (self.t - 1) + reward) / self.t
 
         for a in range(self.n_arms):
             n_samples = len(self.rewards_per_arm[a])
             self.confidence[a] = (2 * np.log(self.t) / n_samples) ** 0.5 if n_samples > 0 else np.inf
+
 
 class SW_Matching_UCB(Matching_UCB):
     def __init__(self, n_arms, n_rows, n_cols, col_promo, window_size):
@@ -146,8 +182,8 @@ class SW_Matching_UCB(Matching_UCB):
 
 
 class CUMSUM_Matching_UCB(Matching_UCB):
-    def __init__(self, n_arms, n_rows, n_cols, M=100, eps=0.05, h=20, alpha=0.01):
-        super().__init__(n_arms, n_rows, n_cols)
+    def __init__(self, n_arms, n_rows, n_cols, col_promo, M=100, eps=0.05, h=20, alpha=0.01):
+        super().__init__(n_arms, n_rows, n_cols, col_promo)
         self.change_detection = [CUMSUM(M, eps, h) for _ in range(n_arms)]
         self.valid_rewards_per_arms = [[] for _ in range(n_arms)]
         self.detections = [[] for _ in range(n_arms)]

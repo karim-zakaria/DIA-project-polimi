@@ -35,3 +35,5 @@ class NonStationarySequentialEnvironment(SequentialArrivalEnvironment):
         reward = self.margin2[price_candidate, promo] * conv_sample
         return reward
 
+    def update(self):
+        self.t += 1
