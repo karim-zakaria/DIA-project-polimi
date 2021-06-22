@@ -143,6 +143,14 @@ class Matching_UCB(UCB):
             n_samples = len(self.rewards_per_arm[a])
             self.confidence[a] = (2 * np.log(self.t) / n_samples) ** 0.5 if n_samples > 0 else np.inf
 
+    def update_one(self, pulled_arm, reward):
+        self.t += 1
+        self.update_observations(pulled_arm, reward)
+        self.empirical_means[pulled_arm] = (self.empirical_means[pulled_arm] * (self.t - 1) + reward) / self.t
+        for a in range(self.n_arms):
+            n_samples = len(self.rewards_per_arm[a])
+            self.confidence[a] = (2 * np.log(self.t) / n_samples) ** 0.5 if n_samples > 0 else np.inf
+
 
 class SW_Matching_UCB(Matching_UCB):
     def __init__(self, n_arms, n_rows, n_cols, col_promo, window_size):
