@@ -39,7 +39,7 @@ margin2 = np.array([[20, 13, 6, 2.5],
                     [35, 26.5, 18, 13.75],
                     [40, 31, 22, 17.5],
                     [45, 35.5, 26, 21.25],
-                    [50, 40, 30, 25]]) / COST2
+                    [50, 40, 30, 25]])/ COST2
 
 # conversion of each class for each price candidate of product 1
 conv_1 = np.array([[[0.45, 0.6, 0.57, 0.52, 0.37, 0.15, 0.08],
@@ -51,6 +51,8 @@ conv_1 = np.array([[[0.45, 0.6, 0.57, 0.52, 0.37, 0.15, 0.08],
                     [0.5, 0.55, 0.51, 0.47, 0.42, 0.35, 0.21],
                     [0.45, 0.42, 0.35, 0.27, 0.14, 0.1, 0.05],
                     [0.65, 0.7, 0.67, 0.55, 0.3, 0.21, 0.11]]])
+conv_1[0] = np.clip(conv_1[1,0] - 0.2, 0.05, 1.)
+conv_1[1] = np.clip(conv_1[1,1] - 0.2, 0.05, 1.)
 
 # conversion of each class for each price candidate (axis 0) and promo (axis 1) of product 2
 conv_2 = np.array([[[[0.57, 0.6, 0.67, 0.69],
@@ -110,6 +112,8 @@ conv_2 = np.array([[[[0.57, 0.6, 0.67, 0.69],
                      [0.21, 0.29, 0.46, 0.5],
                      [0.18, 0.25, 0.34, 0.46],
                      [0.15, 0.21, 0.26, 0.35]]]])
+conv_2[1,2] = np.clip(conv_2[1,2] - 0.2, 0.05, 1.)
+conv_2[1,3] = np.clip(conv_2[1,3] - 0.2, 0.05, 1.)
 
 # two alternative settings for number of promos of each class
 N_PROMOS = 4
@@ -156,7 +160,7 @@ def expected_value_of_reward(pulled_arm1, pulled_arm2, current_customer_class, c
     return reward
 
 
-# Task 4
+# Task 7
 def main():
     # ENVIRONMENT DEFINITION
     environment = NonStationarySequentialEnvironment(margin1=margin1, margin2=margin2, conv_rate1=conv_1,
@@ -176,6 +180,8 @@ def main():
     #
     # START LEARNING PROCESS
     #
+    print("---- Start Learning Process ----")
+
     rewards1 = []
     rewards2 = []
     expected_rewards = []
@@ -184,7 +190,7 @@ def main():
     arms2 = []
     arms3 = []
     for i in range(T):
-        print(i) if i % 10 == 0 else False
+        print(f"  Progress: {i}/{T} days", end="\r") if i % 10 == 0 else False
         # sample number of customer for each class and truncate at 0 to avoid negative
         round_class_num = np.random.normal(n_class, 10)
         round_class_num = [int(n) if n >= 0 else 0 for n in round_class_num]
@@ -283,6 +289,8 @@ def main():
     clairvoyant_expected_rewards = np.array(clairvoyant_expected_rewards)
     rewards = rewards1 + rewards2
 
+    print(f"  Progress: {T}/{T} days")
+
     #
     # LEARNING RESULTS
     #
@@ -293,8 +301,12 @@ def main():
     print(f'Total profit collected from product 2: {np.sum(rewards2)}')
 
     fig, (ax1, ax2) = plt.subplots(2)
-    ax1.plot(np.cumsum(rewards1), label='product 1')
-    ax2.plot(np.cumsum(rewards2), label='product 2')
+    ax1.plot(np.cumsum(rewards1), label='Product 1')
+    ax1.axvline(x=PHASE_LENGTH,c='r',linestyle='--', label="Phase Change")
+    ax1.legend(loc='lower right')
+    ax2.plot(np.cumsum(rewards2), label='Product 2')
+    ax2.axvline(x=PHASE_LENGTH,c='r',linestyle='--', label="Phase Change")
+    ax2.legend(loc='lower right')
     fig.suptitle('Cumulative Rewards from each product')
     plt.show()
 
@@ -303,6 +315,8 @@ def main():
 
     plt.plot(moving_average(rewards, 10))
     plt.title('10-day moving average of rewards collected')
+    plt.axvline(x=PHASE_LENGTH-10,c='r',linestyle='--', label="Phase Change")
+    plt.legend(loc='lower right')
     plt.show()
 
     #
@@ -313,11 +327,13 @@ def main():
     print()
     print(f'Total expected regret: {np.sum(np.subtract(clairvoyant_expected_rewards, expected_rewards))}')
 
-    plt.plot(moving_average(rewards, 10), label='moving average of expected daily rewards')
-    plt.plot(moving_average(clairvoyant_expected_rewards, 10), label='moving average reward of clairvoyant Algorithm',
+    plt.plot(moving_average(expected_rewards, 10), label='Expected rewards for Maching UCB')
+    plt.plot(moving_average(clairvoyant_expected_rewards, 10), label='Expected rewards for Clairvoyant Algorithm',
              color='r')
+    plt.axvline(x=PHASE_LENGTH-10,c='r',linestyle='--', label="Phase Change")
     plt.legend(loc='lower right')
     plt.title('10-day moving average of expected rewards of each algorithm')
+    plt.ylim(500,max(clairvoyant_expected_rewards))
     plt.show()
 
 

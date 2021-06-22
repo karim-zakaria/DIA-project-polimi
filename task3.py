@@ -138,7 +138,7 @@ def main():
     # LEARNING RESULTS RESULTS
     #
     print()
-    print('LEARNING RESULTS RESULTS')
+    print('LEARNING RESULTS')
     print()
     print(f'Total margin collected by UCB: {np.sum(rewards2)}')
     print(f'Total margin collected by Thompson Sampling: {np.sum(rewards1)}')
@@ -154,7 +154,7 @@ def main():
 
     plt.plot(moving_average(rewards1, 10), label='Thomson Sampling')
     plt.plot(moving_average(rewards2, 10), label='UCB1')
-    plt.legend(loc='upper right')
+    plt.legend(loc='lower right')
     plt.title('10-day moving average of rewards collected by both learners')
     plt.show()
 
@@ -191,9 +191,9 @@ def main():
 
     plt.plot(moving_average(rewards_expected1,10), label='Thomson Sampling')
     plt.plot(moving_average(rewards_expected2,10), label='UCB1')
-    plt.plot(moving_average(rewards_clairvoyant_expected,10), label='clairvoyant Algorithm', color='r')
+    plt.plot(moving_average(rewards_clairvoyant_expected,10), label='Clairvoyant Algorithm', color='r')
     plt.legend(loc='lower right')
-    plt.title('10-day moving average of expected rewards of each algorithm')
+    plt.title('10-day moving average of expected rewards for each algorithm')
     plt.show()
 
 

@@ -120,6 +120,8 @@ def main():
     #
     # START LEARNING PROCESS
     #
+    print("---- Start Learning Process ----")
+
     rewards1 = []
     rewards2 = []
     expected_rewards = []
@@ -127,7 +129,7 @@ def main():
     arms1 = []
     arms2 = []
     for i in range(T):
-        print(i) if i % 10 == 0 else False
+        print(f"  Progress: {i}/{T} days", end="\r") if i % 10 == 0 else False
         # sample number of customer for each class and truncate at 0 to avoid negative
         round_class_num = np.random.normal(n_class, 10)
         round_class_num = [int(n) if n >= 0 else 0 for n in round_class_num]
@@ -180,25 +182,31 @@ def main():
     clairvoyant_expected_rewards = np.array(clairvoyant_expected_rewards)
     rewards = rewards1 + rewards2
 
+    print(f"  Progress: {T}/{T} days")
+
     #
     # LEARNING RESULTS
     #
     print()
-    print('LEARNING RESULTS RESULTS')
+    print('LEARNING RESULTS')
     print()
     print(f'Total profit collected from product 1: {np.sum(rewards1)}')
     print(f'Total profit collected from product 2: {np.sum(rewards2)}')
 
     fig, (ax1, ax2) = plt.subplots(2)
-    ax1.plot(np.cumsum(rewards1), label='product 1')
-    ax2.plot(np.cumsum(rewards2), label='product 2')
+    ax1.plot(np.cumsum(rewards1), label='Product 1')
+    ax1.legend(loc='lower right')
+    ax2.plot(np.cumsum(rewards2), label='Product 2')
+    ax2.legend(loc='lower right')
     fig.suptitle('Cumulative Rewards from each product')
+
     plt.show()
 
     def moving_average(x, w):
         return np.convolve(x, np.ones(w), 'valid') / w
 
     plt.plot(moving_average(rewards, 10))
+    plt.plot(np.ones(len(rewards))*np.mean(rewards),label = "Average Daily Rewards", color='tab:blue', linestyle=(0,(5,10)))
     plt.title('10-day moving average of rewards collected')
     plt.show()
 
@@ -210,9 +218,11 @@ def main():
     print()
     print(f'Total expected regret: {np.sum(np.subtract(clairvoyant_expected_rewards, expected_rewards))}')
 
-    plt.plot(moving_average(expected_rewards, 10), label='moving average of expected daily rewards')
-    plt.plot(moving_average(clairvoyant_expected_rewards, 10), label='moving average reward of clairvoyant Algorithm',
+    plt.plot(moving_average(expected_rewards, 10), label='Expected rewards for UCB')
+    plt.plot(np.ones(len(expected_rewards))*np.mean(expected_rewards), color='tab:blue', linestyle=(0,(5,10)))
+    plt.plot(moving_average(clairvoyant_expected_rewards, 10), label='Expected rewards for Clairvoyant Algorithm',
              color='r')
+    plt.plot(np.ones(len(clairvoyant_expected_rewards))*np.mean(clairvoyant_expected_rewards), color='r', linestyle=(0,(5,10)))
     plt.legend(loc='lower right')
     plt.title('10-day moving average of expected rewards of each algorithm')
     plt.show()

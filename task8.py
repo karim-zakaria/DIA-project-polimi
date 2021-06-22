@@ -14,7 +14,7 @@ T = 365
 
 # number of phases in environment
 N_PHASES = 2
-PHASE_HORIZON = 200
+PHASE_HORIZON = int(T/N_PHASES)
 # number of customers of each class
 N_CLASSES = 4
 n_class = np.array([200, 150, 50, 100])
@@ -56,11 +56,14 @@ conv_1_1 = np.array([[0.45, 0.6, 0.57, 0.52, 0.37, 0.15, 0.08],
                    [0.5, 0.55, 0.51, 0.47, 0.42, 0.35, 0.21],
                    [0.45, 0.42, 0.35, 0.27, 0.14, 0.1, 0.05],
                    [0.65, 0.7, 0.67, 0.55, 0.3, 0.21, 0.11]])
-#phase 2 (stub: switched class 2 with 3 and class 1 with 4)
+#phase 2 (change in class preference and reduction in demmand for classes 1 and 2)
 conv_1_2 = np.array([[0.45, 0.6, 0.57, 0.52, 0.37, 0.15, 0.08],
                    [0.5, 0.55, 0.51, 0.47, 0.42, 0.35, 0.21],
                    [0.45, 0.42, 0.35, 0.27, 0.14, 0.1, 0.05],
                    [0.65, 0.7, 0.67, 0.55, 0.3, 0.21, 0.11]])
+conv_1_2[0] = np.clip(conv_1_2[0] - 0.2, 0.05, 1.)
+conv_1_2[1] = np.clip(conv_1_2[1] - 0.2, 0.05, 1.)
+
 conv_1 = np.zeros((N_PHASES,N_CLASSES,N_PRICES))
 conv_1[0,:,:] = conv_1_1
 conv_1[1,:,:] = conv_1_2
@@ -95,7 +98,7 @@ conv_2_1 = np.array([[[0.57, 0.6, 0.67, 0.69],
                     [0.21, 0.29, 0.46, 0.5],
                     [0.18, 0.25, 0.34, 0.46],
                     [0.15, 0.21, 0.26, 0.35]]])
-#phase 2 (stub: switched class 1 with 2 and class 3 with 4)
+#phase 2 (change in class preference and reduction in demmand for classes 3 and 4)
 conv_2_2 = np.array([[[0.38, 0.4, 0.49, 0.53],
                     [0.35, 0.39, 0.43, 0.49],
                     [0.31, 0.37, 0.4, 0.43],
@@ -124,6 +127,9 @@ conv_2_2 = np.array([[[0.38, 0.4, 0.49, 0.53],
                     [0.06, 0.08, 0.15, 0.2],
                     [0.05, 0.06, 0.12, 0.16],
                     [0.04, 0.06, 0.08, 0.12]]])
+conv_2_2[2] = np.clip(conv_2_2[2] - 0.2, 0.05, 1.)
+conv_2_2[3] = np.clip(conv_2_2[3] - 0.2, 0.05, 1.)
+
 conv_2 = np.zeros((N_PHASES,N_CLASSES,N_PRICES,N_PROMOS))
 conv_2[0,:,:,:] = conv_2_1
 conv_2[1,:,:,:] = conv_2_2
@@ -144,7 +150,8 @@ def random_positive_choice(iterable):
 # Task 8
 def main():
     # ENVIRONMENT DEFINITION
-    environment = NonStationarySequentialEnvironment(margin1=margin1, margin2=margin2, conv_rate1=conv_1, conv_rate2=conv_2, horizon=PHASE_HORIZON, n_phases=N_PHASES)
+    environment = NonStationarySequentialEnvironment(margin1=margin1, margin2=margin2, conv_rate1=conv_1,
+                                                    conv_rate2=conv_2, horizon=T, n_phases=N_PHASES)
 
     # initialize variable for average of daily customers per day to calculate number of promos
     empirical_customer_amount = 300
@@ -178,6 +185,9 @@ def main():
     #
     # START LEARNING PROCESS
     #
+    print("---- Start Learning Process ----")
+
+
     rewards1 = []
     rewards2 = []
     expected_rewards = []
@@ -185,8 +195,8 @@ def main():
     arms1 = []
     arms2 = []
     for i in range(T):
-        phase = int(i / PHASE_HORIZON)
-        print(i) if i % 10 == 0 else False
+        phase = min(int(i / PHASE_HORIZON),N_PHASES-1)
+        print(f"  Progress: {i}/{T} days", end="\r") if i % 10 == 0 else False
         # sample number of customer for each class and truncate at 0 to avoid negative
         round_class_num = np.random.normal(n_class, 10)
         round_class_num = [int(n) if n >= 0 else 0 for n in round_class_num]
@@ -269,6 +279,8 @@ def main():
     clairvoyant_expected_rewards = np.array(clairvoyant_expected_rewards)
     rewards = rewards1 + rewards2
 
+    print(f"  Progress: {T}/{T} days")
+
     #
     # LEARNING RESULTS
     #
@@ -279,8 +291,12 @@ def main():
     print(f'Total profit collected from product 2: {np.sum(rewards2)}')
 
     fig, (ax1, ax2) = plt.subplots(2)
-    ax1.plot(np.cumsum(rewards1), label='product 1')
-    ax2.plot(np.cumsum(rewards2), label='product 2')
+    ax1.plot(np.cumsum(rewards1), label='Product 1')
+    ax1.axvline(x=PHASE_HORIZON,c='r',linestyle='--', label="Phase Change")
+    ax1.legend(loc='lower right')
+    ax2.plot(np.cumsum(rewards2), label='Product 2')
+    ax2.axvline(x=PHASE_HORIZON,c='r',linestyle='--', label="Phase Change")
+    ax2.legend(loc='lower right')
     fig.suptitle('Cumulative Rewards from each product')
     plt.show()
 
@@ -289,7 +305,8 @@ def main():
 
     plt.plot(moving_average(rewards, 10))
     plt.title('10-day moving average of rewards collected')
-    plt.axvline(x=200,c='r',linestyle='--')
+    plt.axvline(x=PHASE_HORIZON-10,c='r',linestyle='--', label="Phase Change")
+    plt.legend(loc='lower right')
     plt.show()
 
     #
@@ -300,12 +317,13 @@ def main():
     print()
     print(f'Total expected regret: {np.sum(np.subtract(clairvoyant_expected_rewards, expected_rewards))}')
 
-    plt.plot(moving_average(expected_rewards, 10), label='moving average of expected daily rewards')
-    plt.plot(moving_average(clairvoyant_expected_rewards, 10), label='moving average reward of clairvoyant Algorithm',
+    plt.plot(moving_average(expected_rewards, 10), label='Expected rewards for Maching UCB')
+    plt.plot(moving_average(clairvoyant_expected_rewards, 10), label='Expected rewards for Clairvoyant Algorithm',
              color='r')
-    plt.axvline(x=200,c='r',linestyle='--')
+    plt.axvline(x=PHASE_HORIZON-10,c='r',linestyle='--', label="Phase Change")
     plt.legend(loc='lower right')
     plt.title('10-day moving average of expected rewards of each algorithm')
+    plt.ylim(500,max(clairvoyant_expected_rewards))
     plt.show()
 
 
