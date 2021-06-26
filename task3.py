@@ -1,11 +1,19 @@
+"""
+- Point 3 in assignment
+- Solution of pricing problem for product 1
+- Constant promo assignment
+- Constant product 2 price
+- Known problem parameters:
+    - Product 2 conversion rates
+    - Number of customer arriving each day and their class distribution
+- Daily customer number drawn from gaussian dist
+- Round/Day considered at once since customer number known
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 
 from pricing.enviroment.Environment import Enviroment
-from pricing.enviroment.Non_Stationary_Enviroment import Non_Stationary_Enviroment
-
-from pricing.learners.thompson import SW_Thompson
-from pricing.learners.ucb import SW_UCB
 from pricing.learners.thompson import Thompson
 from pricing.learners.ucb import UCB
 
@@ -18,93 +26,63 @@ def main():
     # FIXED PROBLEM PARAMETERS
     #
     T = 365
-    N_CLASSES = 4
     # arms apply to price 1
-    N_PRICES = 7 
+    N_PRICES = 7
     price_1 = np.array([600, 700, 800, 900, 1000, 1100, 1200])
 
-    #number of arms equal to number of price candidates for product 1
+    # number of arms equal to number of price candidates for product 1
     n_arms = N_PRICES
 
     # since promos only apply to price 2, we consider that we only have one promo (0% discount)
     n_promos = 1
-    # Uncomment for non stationary
-    # n_phases = 4
 
     #
     # MARGINS
     # 
     # maximum margin can't be larger than 1. Divide scenario margins by 700
-    margin1 = np.array([50., 150., 250., 350., 450., 550., 650.])/700.
+    margin1 = np.array([50., 150., 250., 350., 450., 550., 650.]) / 700.
     # price 2 is fixed so we have the maximum margin possible for each sale
-    margin2 = np.array([50.])/700.
+    margin2 = np.array([50.]) / 700.
 
     #
     # NUMBER OF COSTUMERS
     #
-    # Comment for non stationary
     # Number of customers of class i
-    n_customers = np.array([200,150,50,100])
-    # Uncomment for non stationary
-    # #Number of customers of class i at phase j
-    # n_customers = (100*np.random.rand(n_classes, n_phases)).astype(int)
+    n_customers = np.array([200, 150, 50, 100])
 
     #
     # CONVERSION RATE PRODUCT 1
     #
-    # Comment for non stationary
-    # Convertion rate of the first item, from class i at price j.
+    # Conversion rate of the first item, from class i at price j.
     conv_rate1 = np.array([[0.45, 0.6, 0.57, 0.52, 0.37, 0.15, 0.08],
-                  [0.5, 0.55, 0.51, 0.47, 0.42, 0.35, 0.21],
-                  [0.45, 0.42, 0.35, 0.27, 0.14, 0.1, 0.05],
-                  [0.65, 0.7, 0.67, 0.55, 0.3, 0.21, 0.11]])
-    # Uncomment for non stationary
-    # #Convertion rate of the first item, from class i at price j and phase k.
-    # conv_rate1 = np.random.rand(n_classes, n_arms, n_phases)
+                           [0.5, 0.55, 0.51, 0.47, 0.42, 0.35, 0.21],
+                           [0.45, 0.42, 0.35, 0.27, 0.14, 0.1, 0.05],
+                           [0.65, 0.7, 0.67, 0.55, 0.3, 0.21, 0.11]])
 
     #
     # CONVERSION RATE PRODUCT 2
     #
-    # Comment for non stationary
-    # Convertion rate of the second item, from class i at original price j, discount from promo k
+    # Conversion rate of the second item, from class i at original price j, discount from promo k
     # conversion rates are the same for every arm
-    conv_rate2 = np.array([[[.32]]*7, [[.18]]*7,[[.04]]*7,[[.15]]*7])
-    # Uncomment for non stationary
-    # #Convertion rate of the second item, from class i at original price j, discount from promo k and phase l
-    # conv_rate2 = np.random.rand(n_classes, n_arms, n_promos, n_phases)
-    # FOR TASK 3
-    # we need to make it so conversion rates for price 2 for each of the arms are the same
-    # for i in range(1,n_arms):
-    #     conv_rate2[:,i,:] = conv_rate2[:,0,:]
+    conv_rate2 = np.array([[[.32]] * 7, [[.18]] * 7, [[.04]] * 7, [[.15]] * 7])
 
     #
     # PROMOTIONS FOR PRODUCT 2
     #
     # in this case 100% of every class has the only promo available
-    promo_assig = np.array([[1.],[1.],[1.],[1.]])
-    # promo_assig = np.random.rand(n_classes, n_promos)
-    # promo_assig = promo_assig / promo_assig.sum(axis=1)[:, np.newaxis]
+    promo_assig = np.array([[1.], [1.], [1.], [1.]])
 
     #
     # ENVIRONMENT DEFINITION
     #
-    # Comment for non stationary
     st_env1 = Enviroment(n_arms, n_customers, margin1, margin2, conv_rate1, conv_rate2, promo_assig)
     st_env2 = Enviroment(n_arms, n_customers, margin1, margin2, conv_rate1, conv_rate2, promo_assig)
-    # Uncomment for non stationary
-    # nst_env1 = Non_Stationary_Enviroment(n_arms, n_customers, margin1, margin2, conv_rate1, conv_rate2, promo_assig, T, n_phases)
-    # nst_env2 = Non_Stationary_Enviroment(n_arms, n_customers, margin1, margin2, conv_rate1, conv_rate2, promo_assig, T, n_phases)
 
     #
     # LEARNER DEFINITION
     #
-    # Comment for non stationary
     learner1 = Thompson(n_arms)
     learner2 = UCB(n_arms)
-    # Uncomment for non stationary
-    # #window size of around 20 samples
-    # learner1 = SW_Thompson(n_arms, 2*np.sqrt(365).astype(int))
-    # learner2 = SW_UCB(n_arms, 2*np.sqrt(365).astype(int))
 
     #
     # START LEARNING PROCESS
@@ -117,13 +95,8 @@ def main():
         arm1 = learner1.pull_arm()
         arm2 = learner2.pull_arm()
 
-        # Comment for non stationary
         reward1 = st_env1.round(arm1)
         reward2 = st_env2.round(arm2)
-
-        # Uncomment for non stationary
-        # reward1 = nst_env1.round(arm1)
-        # reward2 = nst_env2.round(arm2)
 
         learner1.update(arm1, reward1)
         learner2.update(arm2, reward2)
@@ -163,18 +136,19 @@ def main():
     #
     # regrets are calculated in terms of the expected value of the reward for each pulled arm
     def expected_value_of_reward(pulled_arm):
-      reward = 0
-      for cust_class in range(len(n_customers)):
-          reward += margin1[pulled_arm] * conv_rate1[cust_class, pulled_arm]
-          for promo in range(n_promos):
-              reward += margin2[promo] * conv_rate2[cust_class, pulled_arm, promo] * promo_assig[cust_class, promo] * conv_rate1[cust_class, pulled_arm]
-      return reward
+        reward = 0
+        for cust_class in range(len(n_customers)):
+            reward += margin1[pulled_arm] * conv_rate1[cust_class, pulled_arm]
+            for promo in range(n_promos):
+                reward += margin2[promo] * conv_rate2[cust_class, pulled_arm, promo] * promo_assig[cust_class, promo] * \
+                          conv_rate1[cust_class, pulled_arm]
+        return reward
 
-    # since enviroment is stationary we can just get the argmax of the expected reward for a single round of each arm
+    # since environment is stationary we can just get the argmax of the expected reward for a single round of each arm
     # to get the arm chosen by the clairvoyant algorithm
     clairvoyant_arm = np.argmax([expected_value_of_reward(i) for i in range(7)])
 
-    #expected rewards for each algorithm in each round
+    # expected rewards for each algorithm in each round
     rewards_expected1 = []
     rewards_expected2 = []
     rewards_clairvoyant_expected = []
@@ -184,14 +158,15 @@ def main():
         rewards_expected1.append(expected_value_of_reward(arm1))
         rewards_expected2.append(expected_value_of_reward(arm2))
         rewards_clairvoyant_expected.append(expected_value_of_reward(clairvoyant_arm))
-    
-    print()
-    print(f'Total expected regret of UCB: {np.sum(np.subtract(rewards_clairvoyant_expected,rewards_expected2))}')
-    print(f'Total expected regret of Thompson Sampling: {np.sum(np.subtract(rewards_clairvoyant_expected,rewards_expected1))}')
 
-    plt.plot(moving_average(rewards_expected1,10), label='Thomson Sampling')
-    plt.plot(moving_average(rewards_expected2,10), label='UCB1')
-    plt.plot(moving_average(rewards_clairvoyant_expected,10), label='Clairvoyant Algorithm', color='r')
+    print()
+    print(f'Total expected regret of UCB: {np.sum(np.subtract(rewards_clairvoyant_expected, rewards_expected2))}')
+    print(f'Total expected regret of Thompson Sampling: '
+          f'{np.sum(np.subtract(rewards_clairvoyant_expected, rewards_expected1))}')
+
+    plt.plot(moving_average(rewards_expected1, 10), label='Thomson Sampling')
+    plt.plot(moving_average(rewards_expected2, 10), label='UCB1')
+    plt.plot(moving_average(rewards_clairvoyant_expected, 10), label='Clairvoyant Algorithm', color='r')
     plt.legend(loc='lower right')
     plt.title('10-day moving average of expected rewards for each algorithm')
     plt.show()

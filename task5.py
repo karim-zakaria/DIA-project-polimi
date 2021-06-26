@@ -1,9 +1,18 @@
-import random
+"""
+- Point 5 in assignment
+- Solution of matching problem
+- Constant product 1 and product 2 pricing
+- Daily customer number drawn from gaussian dist and not known
+- Learning process applied for each arriving customer each day
+- For each arriving customer class drawn at random according to class distribution
+- Promo level distribution as percentage of total constant (2 settings available)
+- Number of available promos calculated using variable that holds average total number of customers
+"""
 
+import random
 import numpy as np
 import matplotlib.pyplot as plt
 
-from random import randrange
 from pricing.learners.ucb import UCB, Matching_UCB
 from pricing.enviroment.Sequential_Arrival_Environment import SequentialArrivalEnvironment
 
@@ -82,15 +91,7 @@ promo_setting_2 = np.array([0.25, 0.35, 0.2])
 
 promo_setting = promo_setting_1
 
-promo_assignment = np.array([[1, 0, 0, 0],
-                             [0, 1, 0, 0],
-                             [0, 0, 0, 1],
-                             [0, 0, 1, 0]])
-
 col_promo = [0, 0, 0, 0, 1, 2, 3]
-
-n_arms1 = int(conv_1.size / N_CLASSES)  # for disaggregate model n_arms1 = conv_1.size
-n_arms2 = int(conv_2.size / N_CLASSES / N_PROMOS)  # for disaggregate model n_arms2 = conv_2.size
 
 
 def random_positive_choice(iterable):
@@ -136,7 +137,7 @@ def main():
     arms1 = []
     arms2 = []
     for i in range(T):
-        print(f"  Progress: {i}/{T} days", end="\r") if i % 10 == 0 else False
+        print('\r', "Progress: {}/{} days".format(i, T), end=" ") if i % 10 == 0 else False
         # sample number of customer for each class and truncate at 0 to avoid negative
         round_class_num = np.random.normal(n_class, 10)
         round_class_num = [int(n) if n >= 0 else 0 for n in round_class_num]
@@ -211,7 +212,7 @@ def main():
     clairvoyant_expected_rewards = np.array(clairvoyant_expected_rewards)
     rewards = rewards1 + rewards2
 
-    print(f"  Progress: {T}/{T} days")
+    print("\r", "Progress: {}/{} days".format(T, T))
 
     #
     # LEARNING RESULTS

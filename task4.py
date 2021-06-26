@@ -1,9 +1,16 @@
-import random
+"""
+- Point 4 in assignment
+- Solution of pricing problem for product 1 and product 2
+- Constant promo assignment
+- Daily customer number drawn from gaussian dist and not known
+- Learning process applied for each arriving customer each day
+- For each arriving customer class drawn at random according to class distribution
+"""
 
+import random
 import numpy as np
 import matplotlib.pyplot as plt
 
-from random import randrange
 from pricing.learners.ucb import UCB
 from pricing.enviroment.Sequential_Arrival_Environment import SequentialArrivalEnvironment
 
@@ -77,17 +84,19 @@ conv_2 = np.array([[[0.57, 0.6, 0.67, 0.69],
 
 # two alternative settings for number of promos of each class
 N_PROMOS = 4
-promo_dist_1 = np.array([150, 150, 75, 125])
-promo_dist_2 = np.array([100, 125, 175, 100])
-promo_dist = promo_dist_1
+
+promo_setting_1 = np.array([0.3, 0.15, 0.25])
+promo_setting_2 = np.array([0.25, 0.35, 0.2])
+
+promo_setting = promo_setting_1
 
 promo_assignment = np.array([[1, 0, 0, 0],
                              [0, 1, 0, 0],
                              [0, 0, 1, 0],
                              [0, 0, 0, 1]])
 
-n_arms1 = int(conv_1.size / N_CLASSES)  # for disaggregate model n_arms1 = conv_1.size
-n_arms2 = int(conv_2.size / N_CLASSES / N_PROMOS)  # for disaggregate model n_arms2 = conv_2.size
+n_arms1 = int(conv_1.size / N_CLASSES)
+n_arms2 = int(conv_2.size / N_CLASSES / N_PROMOS)
 
 
 def random_positive_choice(iterable):
@@ -129,7 +138,7 @@ def main():
     arms1 = []
     arms2 = []
     for i in range(T):
-        print(f"  Progress: {i}/{T} days", end="\r") if i % 10 == 0 else False
+        print('\r', "Progress: {}/{} days".format(i, T), end=" ") if i % 10 == 0 else False
         # sample number of customer for each class and truncate at 0 to avoid negative
         round_class_num = np.random.normal(n_class, 10)
         round_class_num = [int(n) if n >= 0 else 0 for n in round_class_num]
@@ -182,7 +191,7 @@ def main():
     clairvoyant_expected_rewards = np.array(clairvoyant_expected_rewards)
     rewards = rewards1 + rewards2
 
-    print(f"  Progress: {T}/{T} days")
+    print("\r", "Progress: {}/{} days".format(T, T))
 
     #
     # LEARNING RESULTS

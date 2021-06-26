@@ -1,5 +1,15 @@
-import random
+"""
+- Point 7 in assignment
+- Solution of pricing anf matching problem
+- Daily customer number drawn from gaussian dist and not known
+- Learning process applied for each arriving customer each day
+- For each arriving customer class drawn at random according to class distribution
+- Promo level distribution as percentage of total constant (2 settings available)
+- Number of available promos calculated using variable that holds average total number of customers
+- Non Stationary Environment -> Sliding Window Learners
+"""
 
+import random
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -190,7 +200,7 @@ def main():
     arms2 = []
     arms3 = []
     for i in range(T):
-        print(f"  Progress: {i}/{T} days", end="\r") if i % 10 == 0 else False
+        print('\r', "Progress: {}/{} days".format(i, T), end=" ") if i % 10 == 0 else False
         # sample number of customer for each class and truncate at 0 to avoid negative
         round_class_num = np.random.normal(n_class, 10)
         round_class_num = [int(n) if n >= 0 else 0 for n in round_class_num]
@@ -289,7 +299,7 @@ def main():
     clairvoyant_expected_rewards = np.array(clairvoyant_expected_rewards)
     rewards = rewards1 + rewards2
 
-    print(f"  Progress: {T}/{T} days")
+    print("\r", "Progress: {}/{} days".format(T, T))
 
     #
     # LEARNING RESULTS

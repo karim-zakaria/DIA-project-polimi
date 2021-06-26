@@ -1,9 +1,17 @@
-import random
+"""
+- Point 6 in assignment
+- Solution of pricing anf matching problem
+- Daily customer number drawn from gaussian dist and not known
+- Learning process applied for each arriving customer each day
+- For each arriving customer class drawn at random according to class distribution
+- Promo level distribution as percentage of total constant (2 settings available)
+- Number of available promos calculated using variable that holds average total number of customers
+"""
 
+import random
 import numpy as np
 import matplotlib.pyplot as plt
 
-from random import randrange
 from pricing.learners.ucb import UCB, Matching_UCB
 from pricing.enviroment.Sequential_Arrival_Environment import SequentialArrivalEnvironment
 
@@ -89,8 +97,7 @@ promo_assignment = np.array([[1, 0, 0, 0],
 
 col_promo = [0, 0, 0, 0, 1, 2, 3]
 
-n_arms1 = int(conv_1.size / N_CLASSES)  # for disaggregate model n_arms1 = conv_1.size
-n_arms2 = int(conv_2.size / N_CLASSES / N_PROMOS)  # for disaggregate model n_arms2 = conv_2.size
+n_arms1 = int(conv_1.size / N_CLASSES)
 
 
 def random_positive_choice(iterable):
@@ -115,7 +122,6 @@ def main():
     extra_promos = N_CLASSES - 1  # we create additional copies of p0 as a hack for the linear sum assignment
     all_promos = N_PROMOS + extra_promos
     learner2 = Matching_UCB(all_promos * N_CLASSES * N_PRICES, N_CLASSES, all_promos * N_PRICES, col_promo * N_PRICES)
-    # learner2 = [Matching_UCB(all_promos * N_CLASSES, N_CLASSES, all_promos) for i in range(n_arms2)]
 
     def expected_value_of_reward(pulled_arm1, pulled_arm2, current_customer_class, curr_promo):
         """calculate and return expected value of reward for arm choices based on conversion rates"""
@@ -136,9 +142,8 @@ def main():
     clairvoyant_expected_rewards = []
     arms1 = []
     arms2 = []
-    arms3 = []
     for i in range(T):
-        print(f"  Progress: {i}/{T} days", end="\r") if i % 10 == 0 else False
+        print('\r', "Progress: {}/{} days".format(i, T), end=" ") if i % 10 == 0 else False
         # sample number of customer for each class and truncate at 0 to avoid negative
         round_class_num = np.random.normal(n_class, 10)
         round_class_num = [int(n) if n >= 0 else 0 for n in round_class_num]
@@ -163,9 +168,6 @@ def main():
 
             # pull price 2 arm if positive reward and update else reward2 = 0
             if reward1 > 0:
-
-                # costs = [learner.pull_arms_2(daily_promos)[2] for learner in learner2]
-                # arm3 = np.argmin(np.array(costs))
 
                 row_ind, col_ind = learner2.pull_arms(daily_promos)
                 chosen_promo = col_ind[customer_class] % N_PRICES - extra_promos
@@ -198,7 +200,6 @@ def main():
 
             arms1.append(arm1)
             arms2.append(arm2)
-            # arms3.append(arm3)
 
             # add rewards to cumulative sums of round rewards and calculate expected rewards
             round_reward1 += reward1 * COST1
@@ -225,7 +226,7 @@ def main():
     clairvoyant_expected_rewards = np.array(clairvoyant_expected_rewards)
     rewards = rewards1 + rewards2
 
-    print(f"  Progress: {T}/{T} days")
+    print("\r", "Progress: {}/{} days".format(T, T))
 
     #
     # LEARNING RESULTS
