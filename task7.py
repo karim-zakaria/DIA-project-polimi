@@ -20,7 +20,7 @@ np.random.seed(41148)
 random.seed(41148)
 
 # time horizon
-T = 365
+T = 40
 N_PHASES = 2
 PHASE_LENGTH = int(T / N_PHASES)
 
@@ -130,7 +130,7 @@ N_PROMOS = 4
 promo_setting_1 = np.array([0.3, 0.15, 0.25])
 promo_setting_2 = np.array([0.25, 0.35, 0.2])
 
-promo_setting = promo_setting_1
+promo_setting = promo_setting_2
 
 promo_assignment = np.array([[1, 0, 0, 0],
                              [0, 1, 0, 0],
@@ -187,6 +187,10 @@ def main():
     learner2 = SW_Matching_UCB(all_promos * N_CLASSES * N_PRICES, N_CLASSES, all_promos * N_PRICES,
                                col_promo * N_PRICES, window_size)
 
+    arm_pull_count_1 = np.zeros((N_PHASES, N_CLASSES, N_PRICES))
+    arm_pull_count_m = np.zeros((N_PHASES, N_CLASSES, N_PROMOS))
+    arm_pull_count_2 = np.zeros((N_PHASES, N_CLASSES, N_PRICES))
+
     #
     # START LEARNING PROCESS
     #
@@ -198,7 +202,7 @@ def main():
     clairvoyant_expected_rewards = []
     arms1 = []
     arms2 = []
-    arms3 = []
+
     for i in range(T):
         print('\r', "Progress: {}/{} days".format(i, T), end=" ") if i % 10 == 0 else False
         # sample number of customer for each class and truncate at 0 to avoid negative
@@ -223,12 +227,12 @@ def main():
             # pull price 1 arm, observe rewards
             arm1 = learner1[customer_class].pull_arm()
             reward1 = environment.sub_round_1(customer_class, arm1)  # The second parameter is 0 due to fixed prices
+            arm_pull_count_1[current_phase, customer_class, arm1] += 1
 
             # pull price 2 arm if positive reward and update else reward2 = 0
             if reward1 > 0:
 
                 # costs = [learner.pull_arms_2(daily_promos)[2] for learner in learner2]
-                # arm3 = np.argmin(np.array(costs))
 
                 row_ind, col_ind = learner2.pull_arms(daily_promos)
                 chosen_promo = col_ind[customer_class] % N_PRICES - extra_promos
@@ -244,6 +248,10 @@ def main():
                 # The second parameter is 0 due to fixed prices.  chosen_promo+1 since [p0 p1 p2 p3]
                 # learner3.update(arm3, reward1 + reward2)
                 arm2 = customer_class * all_promos * N_PRICES + chosen_price_2 * all_promos + chosen_promo
+
+                arm_pull_count_m[current_phase, customer_class, chosen_promo] += 1
+                arm_pull_count_2[current_phase, customer_class, chosen_price_2] += 1
+
                 if chosen_promo == 0:
                     #  Update all arms that correspond to P0 for a given customer_class
                     for promo in range(extra_promos + 1):
@@ -306,6 +314,15 @@ def main():
     #
     print()
     print('LEARNING RESULTS RESULTS')
+    print()
+    for phase in range(N_PHASES):
+        print("Phase {} results:".format(phase+1))
+        for c in range(N_CLASSES):
+            p1 = price1[np.argmax(arm_pull_count_1[phase][c][:])]
+            p2 = price2[np.argmax(arm_pull_count_2[phase][c][:])]
+            print("class {} learners converged to price {} for product 1 and price {} for 2 ".format(c+1, p1, p2))
+        print("With the following shows the number of times a class was assigned each promo level:")
+        print(arm_pull_count_m[phase][:][:])
     print()
     print(f'Total profit collected from product 1: {np.sum(rewards1)}')
     print(f'Total profit collected from product 2: {np.sum(rewards2)}')

@@ -199,6 +199,9 @@ def main():
     print()
     print('LEARNING RESULTS')
     print()
+    print("learner 1 converges to price {} for product 1".format(price1[np.argmax([len(a) for a in learner1.rewards_per_arm])]))
+    print("learner 2 converges to price {} for product 2".format(price2[np.argmax([len(a) for a in learner2.rewards_per_arm])]))
+    print()
     print(f'Total profit collected from product 1: {np.sum(rewards1)}')
     print(f'Total profit collected from product 2: {np.sum(rewards2)}')
 

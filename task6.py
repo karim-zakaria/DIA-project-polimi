@@ -11,6 +11,7 @@
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy
 
 from pricing.learners.ucb import UCB, Matching_UCB
 from pricing.enviroment.Sequential_Arrival_Environment import SequentialArrivalEnvironment
@@ -88,7 +89,7 @@ N_PROMOS = 4
 promo_setting_1 = np.array([0.3, 0.15, 0.25])
 promo_setting_2 = np.array([0.25, 0.35, 0.2])
 
-promo_setting = promo_setting_1
+promo_setting = promo_setting_2
 
 promo_assignment = np.array([[1, 0, 0, 0],
                              [0, 1, 0, 0],
@@ -122,6 +123,10 @@ def main():
     extra_promos = N_CLASSES - 1  # we create additional copies of p0 as a hack for the linear sum assignment
     all_promos = N_PROMOS + extra_promos
     learner2 = Matching_UCB(all_promos * N_CLASSES * N_PRICES, N_CLASSES, all_promos * N_PRICES, col_promo * N_PRICES)
+
+    arm_pull_count_1 = np.zeros((N_CLASSES, N_PRICES))
+    arm_pull_count_m = np.zeros((N_CLASSES, N_PROMOS))
+    arm_pull_count_2 = np.zeros((N_CLASSES, N_PRICES))
 
     def expected_value_of_reward(pulled_arm1, pulled_arm2, current_customer_class, curr_promo):
         """calculate and return expected value of reward for arm choices based on conversion rates"""
@@ -165,24 +170,26 @@ def main():
             # pull price 1 arm, observe rewards
             arm1 = learner1[customer_class].pull_arm()
             reward1 = environment.sub_round_1(customer_class, arm1)  # The second parameter is 0 due to fixed prices
-
+            arm_pull_count_1[customer_class, arm1] += 1
             # pull price 2 arm if positive reward and update else reward2 = 0
             if reward1 > 0:
 
                 row_ind, col_ind = learner2.pull_arms(daily_promos)
                 chosen_promo = col_ind[customer_class] % N_PRICES - extra_promos
                 chosen_price_2 = col_ind[customer_class] // all_promos
+
                 if chosen_promo < 0:
                     chosen_promo = 0
                 if chosen_promo > 0:
                     daily_promos[chosen_promo - 1] -= 1  # daily_promos [#p1 #p2 #p3], chosen_promo [p0 p1 p2 p3]
 
-                # arm3 = learner3.pull_arm()
                 reward2 = environment.sub_round_2(customer_class, chosen_price_2,
                                                   chosen_promo)
                 # The second parameter is 0 due to fixed prices.  chosen_promo+1 since [p0 p1 p2 p3]
-                # learner3.update(arm3, reward1 + reward2)
                 arm2 = customer_class * all_promos * N_PRICES + chosen_price_2 * all_promos + chosen_promo
+
+                arm_pull_count_m[customer_class, chosen_promo] += 1
+                arm_pull_count_2[customer_class, chosen_price_2] += 1
                 if chosen_promo == 0:
                     #  Update all arms that correspond to P0 for a given customer_class
                     for promo in range(extra_promos + 1):
@@ -234,8 +241,15 @@ def main():
     print()
     print('LEARNING RESULTS')
     print()
+    for c in range(N_CLASSES):
+        p1 = price1[np.argmax(arm_pull_count_1[c][:])]
+        p2 = price2[np.argmax(arm_pull_count_2[c][:])]
+        print("class {} learners converged to price {} for product 1 and price {} for 2 ".format(c+1, p1, p2))
+    print("With the following shows the number of times a class was assigned each promo level:")
+    print(arm_pull_count_m)
     print(f'Total profit collected from product 1: {np.sum(rewards1)}')
     print(f'Total profit collected from product 2: {np.sum(rewards2)}')
+
 
     fig, (ax1, ax2) = plt.subplots(2)
     ax1.plot(np.cumsum(rewards1), label='Product 1')

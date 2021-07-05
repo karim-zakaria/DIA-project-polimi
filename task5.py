@@ -12,6 +12,7 @@
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.optimize
 
 from pricing.learners.ucb import UCB, Matching_UCB
 from pricing.enviroment.Sequential_Arrival_Environment import SequentialArrivalEnvironment
@@ -87,7 +88,7 @@ conv_2 = np.array([[[0.57, 0.6, 0.67, 0.69],
 # two alternative settings for number of promos of each class
 N_PROMOS = 4
 promo_setting_1 = np.array([0.3, 0.15, 0.25])
-promo_setting_2 = np.array([0.25, 0.35, 0.2])
+promo_setting_2 = np.array([0.25, 0.35, 0.1])
 
 promo_setting = promo_setting_1
 
@@ -116,6 +117,7 @@ def main():
     extra_promos = N_CLASSES - 1  # we create additional copies of p0 as a hack for the linear sum assignment
     all_promos = N_PROMOS + extra_promos
     learner2 = Matching_UCB(all_promos * N_CLASSES, N_CLASSES, all_promos, col_promo)
+    arm_pull_count= np.zeros((N_CLASSES, N_PROMOS))
 
     def expected_value_of_reward(pulled_arm1, pulled_arm2, current_customer_class, curr_promo):
         """calculate and return expected value of reward for arm choices based on conversion rates"""
@@ -173,6 +175,7 @@ def main():
                 reward2 = environment.sub_round_2(customer_class, 0,
                                                   chosen_promo)  # The second parameter is 0 due to fixed prices.  chosen_promo+1 since [p0 p1 p2 p3]
                 arm2 = customer_class * all_promos + chosen_promo
+                arm_pull_count[customer_class, chosen_promo]+=1
                 if chosen_promo == 0:
                     #  Update all arms that correspond to P0 for a given customer_class
                     for promo in range(extra_promos + 1):
@@ -219,6 +222,9 @@ def main():
     #
     print()
     print('LEARNING RESULTS')
+    print()
+    print("The number of times a class was offered each promo level is shown below:")
+    print(arm_pull_count)
     print()
     print(f'Total profit collected from product 1: {np.sum(rewards1)}')
     print(f'Total profit collected from product 2: {np.sum(rewards2)}')

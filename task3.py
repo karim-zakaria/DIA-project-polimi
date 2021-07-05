@@ -113,6 +113,9 @@ def main():
     print()
     print('LEARNING RESULTS')
     print()
+    print("Thompson learner converges to price {} for product 1".format(price_1[np.argmax([len(a) for a in learner1.rewards_per_arm])]))
+    print("UCB learner converges to price {} for product 1".format(price_1[np.argmax([len(a) for a in learner2.rewards_per_arm])]))
+    print()
     print(f'Total margin collected by UCB: {np.sum(rewards2)}')
     print(f'Total margin collected by Thompson Sampling: {np.sum(rewards1)}')
 

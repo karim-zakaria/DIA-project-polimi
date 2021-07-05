@@ -56,7 +56,7 @@ N_PROMOS = 4
 promo_setting_1 = np.array([0.3, 0.15, 0.25])
 promo_setting_2 = np.array([0.25, 0.35, 0.2])
 
-promo_setting = promo_setting_1
+promo_setting = promo_setting_2
 
 col_promo = [0, 0, 0, 0, 1, 2, 3]
 
@@ -172,6 +172,9 @@ def main():
     all_promos = N_PROMOS + extra_promos
     learner2 = CUMSUM_Matching_UCB(all_promos * N_CLASSES * N_PRICES, N_CLASSES,
                                    all_promos * N_PRICES, col_promo * N_PRICES, M=1000, alpha=0.001)
+    arm_pull_count_1 = np.zeros((N_PHASES, N_CLASSES, N_PRICES))
+    arm_pull_count_m = np.zeros((N_PHASES, N_CLASSES, N_PROMOS))
+    arm_pull_count_2 = np.zeros((N_PHASES, N_CLASSES, N_PRICES))
 
     def expected_value_of_reward(pulled_arm1, pulled_arm2, current_customer_class, curr_promo, curr_phase):
         """calculate and return expected value of reward for arm choices based on conversion rates"""
@@ -216,6 +219,7 @@ def main():
 
         daily_promos = [n * empirical_customer_amount for n in promo_setting]
 
+        current_phase = min(int(i / PHASE_HORIZON), N_PHASES - 1)
         # initialize variables for accumulating round rewards
         round_reward1 = 0
         round_reward2 = 0
@@ -230,6 +234,7 @@ def main():
             # pull price 1 arm, observe rewards
             arm1 = learner1[customer_class].pull_arm()
             reward1 = environment.sub_round_1(customer_class, arm1)  # The second parameter is 0 due to fixed prices
+            arm_pull_count_1[current_phase, customer_class, arm1] += 1
 
             # pull price 2 arm if positive reward and update else reward2 = 0
             if reward1 > 0:
@@ -247,6 +252,9 @@ def main():
                                                   chosen_promo)
                 # The second parameter is 0 due to fixed prices.  chosen_promo+1 since [p0 p1 p2 p3]
                 arm2 = customer_class * all_promos * N_PRICES + chosen_price_2 * all_promos + chosen_promo
+                arm_pull_count_m[current_phase, customer_class, chosen_promo] += 1
+                arm_pull_count_2[current_phase, customer_class, chosen_price_2] += 1
+
                 if chosen_promo == 0:
                     #  Update all arms that correspond to P0 for a given customer_class
                     for promo in range(extra_promos + 1):
@@ -298,6 +306,15 @@ def main():
     #
     print()
     print('LEARNING RESULTS')
+    print()
+    for phase in range(N_PHASES):
+        print("Phase {} results:".format(phase + 1))
+        for c in range(N_CLASSES):
+            p1 = price1[np.argmax(arm_pull_count_1[phase][c][:])]
+            p2 = price2[np.argmax(arm_pull_count_2[phase][c][:])]
+            print("class {} learners converged to price {} for product 1 and price {} for 2 ".format(c + 1, p1, p2))
+        print("With the following shows the number of times a class was assigned each promo level:")
+        print(arm_pull_count_m[phase][:][:])
     print()
     print(f'Total profit collected from product 1: {np.sum(rewards1)}')
     print(f'Total profit collected from product 2: {np.sum(rewards2)}')
