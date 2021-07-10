@@ -28,16 +28,20 @@ class SW_UCB(UCB):
         super(SW_UCB, self).__init__(n_arms)
         self.window_size = window_size
 
+    def pull_arm(self):
+        for a in range(self.n_arms):
+            self.clear_outside_window_rewards(a)
+        return np.argmax(self.empirical_means + self.confidence)
+
     def update(self, pulled_arm, reward):
+        self.update_observations(pulled_arm, reward)
         total_samples = 0
         for a in range(self.n_arms):
             total_samples += len(self.rewards_per_arm[a])
-        for a in range(self.n_arms):
-            self.clear_outside_window_rewards(a)
-            n_samples = len(self.rewards_per_arm[a])
-            self.confidence[a] = (2 * np.log(total_samples) / n_samples) ** 0.5 if n_samples > 0 else np.inf
-        self.update_observations(pulled_arm, reward)
-
+        n_samples = len(self.rewards_per_arm[pulled_arm])
+        self.empirical_means[pulled_arm] = np.mean(np.array([r[0] for r in self.rewards_per_arm[pulled_arm]])) \
+            if n_samples > 0 else 0
+        self.confidence[pulled_arm] = (2 * np.log(min(self.t, self.window_size)) / n_samples) ** 0.5 if n_samples > 0 else np.inf
 
     # Remove rewards that are outside of the window for a given arm. Since the array is ordered by the timestamp and
     # we execute this function every round, we only need to check the timestamp of the first element
@@ -50,10 +54,14 @@ class SW_UCB(UCB):
             if r[1] >= min_timestamp:
                 temp_reward_list.append(r)
         self.rewards_per_arm[arm] = temp_reward_list
-        if len(temp_reward_list) > 0:
-            self.empirical_means[arm] = np.mean(np.array([r[0] for r in self.rewards_per_arm[arm]]))
-        else:
-            self.empirical_means[arm] = 0
+
+        total_samples = 0
+        for a in range(self.n_arms):
+            total_samples += len(self.rewards_per_arm[a])
+
+        n_samples = len(self.rewards_per_arm[arm])
+        self.empirical_means[arm] = np.mean(np.array([r[0] for r in self.rewards_per_arm[arm]])) if n_samples > 0 else 0
+        self.confidence[arm] = (2 * np.log(min(self.t, self.window_size)) / n_samples) ** 0.5 if n_samples > 0 else np.inf
 
     def update_observations(self, pulled_arm, reward):
         self.rewards_per_arm[pulled_arm].append((reward, self.t))  # add a timestamp when an arm has been pulled
@@ -157,16 +165,32 @@ class SW_Matching_UCB(Matching_UCB):
         super().__init__(n_arms, n_rows, n_cols, col_promo)
         self.window_size = window_size
 
+    def pull_arms(self, promos_remaining):
+        for a in range(self.n_arms):
+            self.clear_outside_window_rewards(a)
+        upper_conf = self.empirical_means + self.confidence
+        upper_conf[np.isinf(upper_conf)] = 1e3
+        cost_matrix = -upper_conf.reshape(self.n_rows, self.n_cols)
+
+        # if there are no more promotion of a certain type we set the cost of that column as high as possible
+        for c in range(self.n_cols):
+            if self.col_promo[c] != 0:
+                if promos_remaining[self.col_promo[c]-1] == 0:
+                    for r in range(self.n_rows):
+                        cost_matrix[r][c] = np.inf
+
+        row_ind, col_ind = linear_sum_assignment(cost_matrix)
+        return row_ind, col_ind
+
     def update_one(self, pulled_arm, reward):
+        self.update_observations(pulled_arm, reward)
         total_samples = 0
         for a in range(self.n_arms):
             total_samples += len(self.rewards_per_arm[a])
-        for a in range(self.n_arms):
-            self.clear_outside_window_rewards(a)
-            n_samples = len(self.rewards_per_arm[a])
-            self.confidence[a] = (2 * np.log(total_samples) / n_samples) ** 0.5 if n_samples > 0 else np.inf
-        self.update_observations(pulled_arm, reward)
-
+        n_samples = len(self.rewards_per_arm[pulled_arm])
+        self.empirical_means[pulled_arm] = np.mean(np.array([r[0] for r in self.rewards_per_arm[pulled_arm]])) \
+            if n_samples > 0 else 0
+        self.confidence[pulled_arm] = (2 * np.log(min(self.t, self.window_size)) / n_samples) ** 0.5 if n_samples > 0 else np.inf
 
     # Remove rewards that are outside of the window for a given arm. Since the array is ordered by the timestamp and
     # we execute this function every round, we only need to check the timestamp of the first element
@@ -179,10 +203,14 @@ class SW_Matching_UCB(Matching_UCB):
             if r[1] >= min_timestamp:
                 temp_reward_list.append(r)
         self.rewards_per_arm[arm] = temp_reward_list
-        if len(temp_reward_list) > 0:
-            self.empirical_means[arm] = np.mean(np.array([r[0] for r in self.rewards_per_arm[arm]]))
-        else:
-            self.empirical_means[arm] = 0
+
+        total_samples = 0
+        for a in range(self.n_arms):
+            total_samples += len(self.rewards_per_arm[a])
+
+        n_samples = len(self.rewards_per_arm[arm])
+        self.empirical_means[arm] = np.mean(np.array([r[0] for r in self.rewards_per_arm[arm]])) if n_samples > 0 else 0
+        self.confidence[arm] = (2 * np.log(min(self.t, self.window_size)) / n_samples) ** 0.5 if n_samples > 0 else np.inf
 
     def update_observations(self, pulled_arm, reward):
         self.rewards_per_arm[pulled_arm].append((reward, self.t))  # add a timestamp when an arm has been pulled

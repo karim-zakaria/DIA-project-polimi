@@ -20,7 +20,7 @@ np.random.seed(41148)
 random.seed(41148)
 
 # time horizon
-T = 40
+T = 365
 N_PHASES = 2
 PHASE_LENGTH = int(T / N_PHASES)
 
@@ -61,8 +61,8 @@ conv_1 = np.array([[[0.45, 0.6, 0.57, 0.52, 0.37, 0.15, 0.08],
                     [0.5, 0.55, 0.51, 0.47, 0.42, 0.35, 0.21],
                     [0.45, 0.42, 0.35, 0.27, 0.14, 0.1, 0.05],
                     [0.65, 0.7, 0.67, 0.55, 0.3, 0.21, 0.11]]])
-conv_1[0] = np.clip(conv_1[1,0] - 0.2, 0.05, 1.)
-conv_1[1] = np.clip(conv_1[1,1] - 0.2, 0.05, 1.)
+conv_1[1,0,:] = np.clip(conv_1[1,0,:] - 0.2, 0.05, 1.)
+conv_1[1,1,:] = np.clip(conv_1[1,1,:] - 0.2, 0.05, 1.)
 
 # conversion of each class for each price candidate (axis 0) and promo (axis 1) of product 2
 conv_2 = np.array([[[[0.57, 0.6, 0.67, 0.69],
@@ -122,15 +122,15 @@ conv_2 = np.array([[[[0.57, 0.6, 0.67, 0.69],
                      [0.21, 0.29, 0.46, 0.5],
                      [0.18, 0.25, 0.34, 0.46],
                      [0.15, 0.21, 0.26, 0.35]]]])
-conv_2[1,2] = np.clip(conv_2[1,2] - 0.2, 0.05, 1.)
-conv_2[1,3] = np.clip(conv_2[1,3] - 0.2, 0.05, 1.)
+conv_2[1,2,:,:] = np.clip(conv_2[1,2,:,:] - 0.2, 0.05, 1.)
+conv_2[1,3,:,:] = np.clip(conv_2[1,3,:,:] - 0.2, 0.05, 1.)
 
 # two alternative settings for number of promos of each class
 N_PROMOS = 4
 promo_setting_1 = np.array([0.3, 0.15, 0.25])
 promo_setting_2 = np.array([0.25, 0.35, 0.2])
 
-promo_setting = promo_setting_2
+promo_setting = promo_setting_1
 
 promo_assignment = np.array([[1, 0, 0, 0],
                              [0, 1, 0, 0],
